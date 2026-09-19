@@ -52,7 +52,7 @@ button{cursor:pointer}
   <div id="app">
     <header class="topbar">
       <div>
-        <div class="eyebrow">行政書士試験 2026</div>
+        <div class="eyebrow">行政書士試験 2026 <span style="opacity:.55;font-weight:700">v1.0.4</span></div>
         <h1 id="pageTitle">ホーム</h1>
       </div>
       <button class="icon-btn" id="quickReviewBtn" aria-label="今日の復習">↻</button>
@@ -81,7 +81,7 @@ window.GYOSEI_DATA={"mocks":{"mock1":[{"id":"MOCK1-01","mock":"mock1","no":1,"fo
 'use strict';
 
 const DATA = window.GYOSEI_DATA || {mocks:{}, predicted30:[], mnemonics:[], propositions:[]};
-const APP_VERSION = '1.0.3';
+const APP_VERSION = '1.0.4';
 const STORAGE_KEY = 'gyosei2026_state_v1';
 const EXAM_DATE_DEFAULT = '2026-11-08';
 const INTERVALS = [1,3,7,14,30];
@@ -660,7 +660,17 @@ function openModal(html){modalRoot.innerHTML=`<div class="modal-backdrop" id="mo
 function closeModal(){modalRoot.innerHTML='';}
 
 window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredInstallPrompt=e;if(route==='settings')renderSettings();});
-if('serviceWorker' in navigator && location.protocol.startsWith('http')) navigator.serviceWorker.register('./sw.js').catch(console.warn);
+if('serviceWorker' in navigator && location.protocol.startsWith('http')){
+  navigator.serviceWorker.register('./sw.js?v=8',{updateViaCache:'none'}).then(reg=>{
+    reg.update().catch(()=>{});
+  }).catch(console.warn);
+  let reloading=false;
+  navigator.serviceWorker.addEventListener('controllerchange',()=>{
+    if(reloading)return;
+    reloading=true;
+    location.reload();
+  });
+}
 
 // Restore active mock if valid
 if(state.activeMock && DATA.mocks?.[state.activeMock.mock]){

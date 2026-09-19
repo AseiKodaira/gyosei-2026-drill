@@ -81,7 +81,7 @@ window.GYOSEI_DATA={"mocks":{"mock1":[{"id":"MOCK1-01","mock":"mock1","no":1,"fo
 'use strict';
 
 const DATA = window.GYOSEI_DATA || {mocks:{}, predicted30:[], mnemonics:[], propositions:[]};
-const APP_VERSION = '1.0.8';
+const APP_VERSION = '1.0.9';
 const STORAGE_KEY = 'gyosei2026_state_v1';
 const EXAM_DATE_DEFAULT = '2026-11-08';
 const INTERVALS = [1,3,7,14,30];
@@ -790,9 +790,55 @@ async function speakRap(text,mode='rhythm3'){
     }
   }
 }
+const AI_RAP_MANIFEST_URL='./audio/rap/manifest.json?v=1.0.9';
+let aiRapManifestPromise=null;
+let activeRapAudio=null;
+
+async function loadAiRapManifest(){
+  if(!aiRapManifestPromise){
+    aiRapManifestPromise=fetch(AI_RAP_MANIFEST_URL,{cache:'no-store'})
+      .then(r=>r.ok?r.json():null)
+      .catch(()=>null);
+  }
+  return aiRapManifestPromise;
+}
+function stopRapAudio(){
+  if(activeRapAudio){
+    try{activeRapAudio.pause();activeRapAudio.currentTime=0;}catch(e){}
+    activeRapAudio=null;
+  }
+}
+async function playGeneratedRap(text){
+  const manifest=await loadAiRapManifest();
+  const src=manifest?.items?.[text];
+  if(!src)return false;
+  try{
+    speechSynthesis?.cancel?.();
+    stopRapAudio();
+    const bust=manifest.generatedAt?encodeURIComponent(manifest.generatedAt):APP_VERSION;
+    const audio=new Audio(src+(src.includes('?')?'&':'?')+'v='+bust);
+    activeRapAudio=audio;
+    audio.onended=()=>{if(activeRapAudio===audio)activeRapAudio=null;};
+    audio.onerror=()=>{if(activeRapAudio===audio)activeRapAudio=null;};
+    await audio.play();
+    return true;
+  }catch(e){
+    stopRapAudio();
+    return false;
+  }
+}
+async function playRap(text){
+  if(await playGeneratedRap(text)){
+    toast('🎙️ AI 4拍ラップ');
+    return;
+  }
+  toast('AI音声未生成・端末音声で再生');
+  await speakRap(text,'rhythm3');
+}
+
 function rapHtml(it,truth,expl){
   const rap=rapPhraseFor(it,truth,expl);
-  return `<div class="rap-box"><div class="rap-label">🎤 4拍・口ずさみ</div><div class="rap-phrase">${nl(rap)}</div><div class="rap-actions"><button class="btn secondary" data-speak-rap="1">🎵 4拍ラップ</button><button class="btn outline" data-speak-normal="1">▶ 普通に読む</button></div><button class="btn outline full" data-repeat-rap="1" style="margin-top:8px">声に出した回数 0/3</button></div>`;
+  return `<div class="rap-box"><div class="rap-label">🎤 4拍・口ずさみ</div><div class="rap-phrase">${nl(rap)}</div><div class="rap-actions"><button class="btn secondary" data-speak-rap="1">🎵 4拍ラップ</button><button class="btn outline" data-speak-normal="1">▶ 普通に読む</button></div><div class="rap-hint">4拍ラップはAI生成音声。未生成時のみ端末音声に切り替えます。</div><button class="btn outline full" data-repeat-rap="1" style="margin-top:8px">声に出した回数 0/3</button></div>`;
 }
 function submitDontKnow(it){
   if(studySession.submitted)return;
@@ -811,7 +857,7 @@ function submitDontKnow(it){
   const fb=document.getElementById('studyFeedback');
   fb.innerHTML=`${unknownResultHtml(it,rawExpl)}${rapHtml(it,answer,rawExpl)}<p class="note" style="margin-top:10px">未回答として記録し、最優先で復習に回します。適当に選ぶ必要はありません。</p><button class="btn full" id="dontKnowNext" style="margin-top:10px">次の問題へ</button>`;
   const rap=rapPhraseFor(it,answer,rawExpl);
-  document.querySelector('[data-speak-rap]')?.addEventListener('click',()=>speakRap(rap,'rhythm3'));
+  document.querySelector('[data-speak-rap]')?.addEventListener('click',()=>playRap(rap));
   document.querySelector('[data-speak-normal]')?.addEventListener('click',()=>speakRap(rap,'normal'));
   const repeatBtn=document.querySelector('[data-repeat-rap]');
   if(repeatBtn){
@@ -929,7 +975,7 @@ function renderMockQuestion(){
 
   if(revealed){
     const rap=rapPhraseFor(q,answerTextFor(q),q.explanation||'');
-    document.querySelector('[data-speak-rap]')?.addEventListener('click',()=>speakRap(rap,'rhythm3'));document.querySelector('[data-speak-normal]')?.addEventListener('click',()=>speakRap(rap,'normal'));
+    document.querySelector('[data-speak-rap]')?.addEventListener('click',()=>playRap(rap));document.querySelector('[data-speak-normal]')?.addEventListener('click',()=>speakRap(rap,'normal'));
     const repeatBtn=document.querySelector('[data-repeat-rap]');
     if(repeatBtn){
       let n=0;
@@ -1034,7 +1080,7 @@ function closeModal(){modalRoot.innerHTML='';}
 
 window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredInstallPrompt=e;if(route==='settings')renderSettings();});
 if('serviceWorker' in navigator && location.protocol.startsWith('http')){
-  navigator.serviceWorker.register('./sw.js?v=12',{updateViaCache:'none'}).then(reg=>{
+  navigator.serviceWorker.register('./sw.js?v=13',{updateViaCache:'none'}).then(reg=>{
     reg.update().catch(()=>{});
   }).catch(console.warn);
   let reloading=false;

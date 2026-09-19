@@ -36,7 +36,13 @@ button{cursor:pointer}
 .filters{display:grid;grid-template-columns:1fr 1fr;gap:8px}.field{display:flex;flex-direction:column;gap:5px}.field label{font-size:11px;font-weight:800;color:var(--muted)}.field select,.field input,.field textarea{width:100%;border:1px solid #ccd5e2;border-radius:12px;background:white;padding:11px;color:var(--ink)}.field textarea{min-height:100px;resize:vertical}
 .study-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}.question-card{background:white;border-radius:20px;padding:18px;border:1px solid var(--line);box-shadow:var(--shadow)}.q-meta{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}.q-stem{white-space:pre-wrap;font-size:15px;line-height:1.75;font-weight:700;margin:0 0 16px}.choice-list{display:flex;flex-direction:column;gap:9px}.choice{width:100%;text-align:left;border:1px solid #cfd7e3;background:#fff;border-radius:14px;padding:13px 14px;line-height:1.55;color:var(--ink)}.choice.selected{border-color:var(--blue);background:#edf5fc}.choice.correct{border-color:#69bd8d;background:var(--greenbg)}.choice.wrong{border-color:#e19a95;background:var(--redbg)}.choice .num{font-weight:900;color:var(--navy);margin-right:8px}.feedback{margin-top:14px;padding:14px;border-radius:14px;background:#f7f9fc;border:1px solid var(--line)}.feedback.good{background:var(--greenbg);border-color:#bde3cd}.feedback.bad{background:var(--redbg);border-color:#efc0bc}.feedback h4{margin:0 0 6px;font-size:14px}.feedback p{margin:0;font-size:12px;line-height:1.65;white-space:pre-wrap}.confidence{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:12px}.conf-btn{border:1px solid #cbd5e1;background:white;border-radius:12px;padding:10px;font-size:12px;font-weight:800}.conf-btn[data-c="understood"]{color:var(--green)}.conf-btn[data-c="none"]{color:var(--red)}
 .tf{display:grid;grid-template-columns:1fr 1fr;gap:10px}.tf button{padding:20px 10px;font-size:18px}.wordbank{font-size:12px;line-height:1.8;padding:12px;background:#f5f7fb;border-radius:12px;margin-bottom:12px}.multi-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}.mock-timer{font-variant-numeric:tabular-nums;font-weight:900;color:var(--red);background:var(--redbg);padding:7px 10px;border-radius:10px}.mock-nav{display:flex;justify-content:space-between;gap:8px;margin-top:14px}.mock-grid{display:grid;grid-template-columns:repeat(10,1fr);gap:5px;margin-top:14px}.mock-grid button{border:0;border-radius:7px;background:#e9edf3;color:#536174;font-size:10px;height:28px}.mock-grid button.done{background:#dbece4;color:var(--green)}.mock-grid button.current{background:var(--navy);color:white}.result-big{text-align:center;padding:20px}.result-big .num{font-size:54px;font-weight:950;color:var(--navy)}.thresholds{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.threshold{border-radius:12px;padding:11px;text-align:center;background:#f6f8fb}.threshold strong{display:block;font-size:18px}.threshold.ok{background:var(--greenbg);color:var(--green)}.threshold.ng{background:var(--redbg);color:var(--red)}
-.mnemonic{font-size:20px;line-height:1.7;font-weight:900;text-align:center;padding:25px 10px;color:var(--navy)}.reveal{filter:blur(9px);user-select:none;transition:.2s}.reveal.show{filter:none;user-select:auto}.settings-block{margin-bottom:12px}.note{font-size:11px;color:var(--muted);line-height:1.6}.danger-zone{border-color:#f0c6c2}.empty{text-align:center;color:var(--muted);padding:30px 10px}.toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%) translateY(20px);background:#172033;color:white;padding:10px 14px;border-radius:999px;font-size:12px;opacity:0;pointer-events:none;transition:.2s;z-index:80}.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}.modal-backdrop{position:fixed;inset:0;background:rgba(15,23,42,.52);z-index:70;display:flex;align-items:flex-end;justify-content:center}.modal{background:white;width:min(720px,100%);max-height:86vh;overflow:auto;border-radius:24px 24px 0 0;padding:20px 16px calc(20px + env(safe-area-inset-bottom))}.modal h2{margin:0 0 12px}.divider{height:1px;background:var(--line);margin:14px 0}
+.mnemonic{font-size:20px;line-height:1.7;font-weight:900;text-align:center;padding:25px 10px;color:var(--navy)}
+.rap-box{margin-top:12px;padding:15px;border-radius:16px;background:linear-gradient(135deg,#fff7df,#fffdf7);border:1px solid #efcf82}
+.rap-label{font-size:11px;font-weight:900;color:#8b5a00;letter-spacing:.05em;margin-bottom:7px}
+.rap-phrase{font-size:18px;line-height:1.65;font-weight:950;color:#4b3600}
+.rap-hint{font-size:11px;color:#7a6850;margin-top:6px}
+.rap-actions{display:flex;gap:8px;margin-top:10px}.rap-actions .btn{flex:1}
+.reveal{filter:blur(9px);user-select:none;transition:.2s}.reveal.show{filter:none;user-select:auto}.settings-block{margin-bottom:12px}.note{font-size:11px;color:var(--muted);line-height:1.6}.danger-zone{border-color:#f0c6c2}.empty{text-align:center;color:var(--muted);padding:30px 10px}.toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%) translateY(20px);background:#172033;color:white;padding:10px 14px;border-radius:999px;font-size:12px;opacity:0;pointer-events:none;transition:.2s;z-index:80}.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}.modal-backdrop{position:fixed;inset:0;background:rgba(15,23,42,.52);z-index:70;display:flex;align-items:flex-end;justify-content:center}.modal{background:white;width:min(720px,100%);max-height:86vh;overflow:auto;border-radius:24px 24px 0 0;padding:20px 16px calc(20px + env(safe-area-inset-bottom))}.modal h2{margin:0 0 12px}.divider{height:1px;background:var(--line);margin:14px 0}
 @media(min-width:700px){.grid{grid-template-columns:repeat(4,1fr)}.bottom-nav{left:50%;right:auto;transform:translateX(-50%);width:620px;border:1px solid var(--line);border-bottom:0;border-radius:18px 18px 0 0}.main{padding-bottom:35px}.modal{border-radius:24px;margin-bottom:20px}.modal-backdrop{align-items:center}.confidence{grid-template-columns:repeat(4,1fr)}}
 
 </style>
@@ -75,7 +81,7 @@ window.GYOSEI_DATA={"mocks":{"mock1":[{"id":"MOCK1-01","mock":"mock1","no":1,"fo
 'use strict';
 
 const DATA = window.GYOSEI_DATA || {mocks:{}, predicted30:[], mnemonics:[], propositions:[]};
-const APP_VERSION = '1.0.1';
+const APP_VERSION = '1.0.2';
 const STORAGE_KEY = 'gyosei2026_state_v1';
 const EXAM_DATE_DEFAULT = '2026-11-08';
 const INTERVALS = [1,3,7,14,30];
@@ -340,6 +346,83 @@ function renderStudyItem(){
   else document.getElementById('writtenReveal').onclick=()=>submitWrittenStudy(it);
   document.querySelector('[data-dontknow]')?.addEventListener('click',()=>submitDontKnow(it));
 }
+
+const RAP_RULES = [
+  [/審査基準|標準処理期間/, '基準は義務、期間は努力。決めた期間は公表だ。'],
+  [/行政指導/, '指導は任意、従わぬだけで不利益ダメ。'],
+  [/聴聞|弁明/, '聴聞見る・聞く・調書あり。弁明原則、書面なり。'],
+  [/理由提示/, '理由は同時が原則だ。急ぎの例外、あとで出す。'],
+  [/再調査/, '再調査、法律あって、不作為なし、審理員なし。'],
+  [/審理員/, '名簿は努力、意見書作る、諮問は審査庁。'],
+  [/審査請求期間/, '知って3か月、処分から1年。正当理由は例外あり。'],
+  [/執行停止/, '審査請求しても原則止まらず。止める条件を見落とすな。'],
+  [/出訴期間/, '知ったら6か月、処分から1年。正当理由は例外あり。'],
+  [/仮の差止め|仮の義務付け|仮の救済/, '本案は重大、仮は償えぬ損。緊急必要、ここがツボ。'],
+  [/原告適格|訴えの利益/, '法律上の利益が鍵。効果が消えても利益が残れば訴えあり。'],
+  [/処分性/, '公権力、直接法効果。事実だけなら処分じゃない。'],
+  [/取消判決|拘束力|第三者効/, '取消判決、行政庁を縛る。第三者にも効く、でも別ルール。'],
+  [/国賠2条|営造物/, '一条は人、二条は物。営造物は安全性。'],
+  [/国賠1条|国家賠償/, '一条は人の違法公権力。職務の外形、忘れるな。'],
+  [/自治事務|法定受託/, '自治と受託、違うのは国の関与。'],
+  [/条例|規則/, '条例は議会、規則は長。法令違反はできません。'],
+  [/住民監査|住民訴訟/, '住民訴訟、その前監査。財務会計がターゲット。'],
+  [/時効/, '知って5年、行使できて10年。'],
+  [/共有/, '保存は一人、管理は持分の過半数。'],
+  [/即時取得/, '取引・占有・善意無過失。占有改定だけは弱い。'],
+  [/根抵当/, '根抵当、極度額で枠を張る。元本確定でルール変わる。'],
+  [/抵当|物上代位/, '物上代位、払う前に差押え。先に押さえて権利を守れ。'],
+  [/留置/, '留置は占有、離せば消える。牽連性も忘れるな。'],
+  [/債権者代位/, '代理じゃない、自分の名で債務者の権利。'],
+  [/相殺/, '相殺は対立、同種の債権。時期と対抗、そこを見る。'],
+  [/賃貸借|転貸/, '譲渡・転貸、原則大家の承諾。'],
+  [/解除/, '解除は催告が原則、例外は無催告。帰責だけで決めない。'],
+  [/不法行為/, '故意過失、権利侵害、損害、因果。四つをつなげて不法行為。'],
+  [/遺言/, '遺言15、共同禁止、方式守る。'],
+  [/遺留分/, '遺留分、今は金銭。知って1年、相続から10年。'],
+  [/共同親権|親権/, '共同でも日常・急迫、単独OK。子の利益が真ん中だ。'],
+  [/養育費/, '法定2万、先取上限8万。数字を混ぜるな。'],
+  [/財産分与/, '4月以後の離婚は5年、3月までなら2年。'],
+  [/法定利率/, '令和8から第3期、それでも3パー。'],
+  [/養子/, '15歳未満は代諾だ。共同親権なら父母で代諾。']
+];
+
+function rapPhraseFor(it, truth='', expl=''){
+  const hay=[it.topic,it.tag,it.field,it.subject,it.stem,it.statement].filter(Boolean).join('｜');
+  // First use existing curated mnemonic material.
+  let best=null, bestScore=0;
+  for(const m of mnemonics){
+    const keys=String(m.topic||'').split(/[\/・]/).filter(x=>x.length>=2);
+    const score=keys.reduce((n,k)=>n+(hay.includes(k)?k.length:0),0) + (hay.includes(String(m.topic||''))?10:0);
+    if(score>bestScore){best=m;bestScore=score;}
+  }
+  if(best && bestScore>=2) return best.phrase;
+  for(const [re,phrase] of RAP_RULES){ if(re.test(hay)) return phrase; }
+
+  // For questions with an explanation, compress the first useful sentence.
+  const core=String(expl||'').replace(/\s+/g,' ').split(/[。！？]/).find(x=>x.trim().length>=8);
+  if(core){
+    const short=core.trim().slice(0,52);
+    return (short.length<core.trim().length?short+'…':short)+'。ここを声で3回。';
+  }
+  // For proposition drills, avoid repeating a false proposition as if it were true.
+  if(it.type==='proposition'){
+    return `${it.correct?'この肢は○':'この肢は×'}。論点「${it.tag||it.field||'ここ'}」、罠は「${it.trap||'入替え'}」。`;
+  }
+  return `${truth||'正解を確認'}。要件・例外・効果、3拍で覚える。`;
+}
+
+function speakRap(text){
+  if(!('speechSynthesis' in window)){toast('この端末では読み上げ非対応です');return;}
+  speechSynthesis.cancel();
+  const u=new SpeechSynthesisUtterance(text);
+  u.lang='ja-JP'; u.rate=.88; u.pitch=1.03;
+  speechSynthesis.speak(u);
+}
+
+function rapHtml(it,truth,expl){
+  const rap=rapPhraseFor(it,truth,expl);
+  return `<div class="rap-box"><div class="rap-label">🎤 口ずさみ3回</div><div class="rap-phrase">${esc(rap)}</div><div class="rap-hint">声に出して3回 → 画面を見ずに1回言えたら次へ。</div><div class="rap-actions"><button class="btn secondary" data-speak-rap="1">▶ 読み上げ</button><button class="btn outline" data-repeat-rap="1">3回チェック</button></div></div>`;
+}
 function submitDontKnow(it){
   if(studySession.submitted)return;
   studySession.submitted=true; studySession.score=false;
@@ -355,7 +438,14 @@ function submitDontKnow(it){
   const expl=it.type==='proposition'?`論点：${it.tag||''}\n誤肢パターン：${it.trap||''}`:(it.explanation||'');
   recordProgress(it.id,false,'none',{lastSkipped:true});
   const fb=document.getElementById('studyFeedback');
-  fb.innerHTML=`<div class="feedback bad"><h4>？ わからない → 正解を確認　${esc(truth)}</h4><p>${nl(expl)}</p>${it.source?`<p style="margin-top:7px"><a href="${esc(it.source)}" target="_blank" rel="noopener">根拠資料を開く</a></p>`:''}</div><p class="note" style="margin-top:10px">未回答として記録し、最優先で復習に回します。適当に選ぶ必要はありません。</p><button class="btn full" id="dontKnowNext" style="margin-top:10px">次の問題へ</button>`;
+  fb.innerHTML=`<div class="feedback bad"><h4>？ わからない → 正解を確認　${esc(truth)}</h4><p>${nl(expl)}</p>${it.source?`<p style="margin-top:7px"><a href="${esc(it.source)}" target="_blank" rel="noopener">根拠資料を開く</a></p>`:''}</div>${rapHtml(it,truth,expl)}<p class="note" style="margin-top:10px">未回答として記録し、最優先で復習に回します。適当に選ぶ必要はありません。</p><button class="btn full" id="dontKnowNext" style="margin-top:10px">次の問題へ</button>`;
+  const rap=rapPhraseFor(it,truth,expl);
+  document.querySelector('[data-speak-rap]')?.addEventListener('click',()=>speakRap(rap));
+  const repeatBtn=document.querySelector('[data-repeat-rap]');
+  if(repeatBtn){
+    let n=0;
+    repeatBtn.addEventListener('click',()=>{n++; repeatBtn.textContent=n>=3?'✓ 3回言えた':`${n}/3 回`; if(n>=3)repeatBtn.disabled=true;});
+  }
   document.getElementById('dontKnowNext').onclick=nextStudy;
 }
 function submitStudy(it, answer){

@@ -81,7 +81,7 @@ window.GYOSEI_DATA={"mocks":{"mock1":[{"id":"MOCK1-01","mock":"mock1","no":1,"fo
 'use strict';
 
 const DATA = window.GYOSEI_DATA || {mocks:{}, predicted30:[], mnemonics:[], propositions:[]};
-const APP_VERSION = '1.0.6';
+const APP_VERSION = '1.0.7';
 const STORAGE_KEY = 'gyosei2026_state_v1';
 const EXAM_DATE_DEFAULT = '2026-11-08';
 const INTERVALS = [1,3,7,14,30];
@@ -386,29 +386,175 @@ const RAP_RULES = [
   [/養子/, '15歳未満は代諾だ。共同親権なら父母で代諾。']
 ];
 
-function rapPhraseFor(it, truth='', expl=''){
-  const hay=[it.topic,it.tag,it.field,it.subject,it.stem,it.statement].filter(Boolean).join('｜');
-  // First use existing curated mnemonic material.
-  let best=null, bestScore=0;
+const RAP_META_RE=/(?:論点\s*[:：]|誤肢パターン\s*[:：]|ここを声で|この肢は[○×]|要件[・、]例外[・、]効果|覚えよう|正解を確認|罠は\s*[「:：]?)/;
+
+function rapHay(it){
+  return [it.topic,it.tag,it.field,it.subject,it.stem,it.statement].filter(Boolean).join('｜');
+}
+function curatedRapPhraseFor(it){
+  const hay=rapHay(it);
+  let best=null,bestScore=0;
   for(const m of mnemonics){
     const keys=String(m.topic||'').split(/[\/・]/).filter(x=>x.length>=2);
-    const score=keys.reduce((n,k)=>n+(hay.includes(k)?k.length:0),0) + (hay.includes(String(m.topic||''))?10:0);
+    const score=keys.reduce((n,k)=>n+(hay.includes(k)?k.length:0),0)+(hay.includes(String(m.topic||''))?10:0);
     if(score>bestScore){best=m;bestScore=score;}
   }
-  if(best && bestScore>=2) return best.phrase;
-  for(const [re,phrase] of RAP_RULES){ if(re.test(hay)) return phrase; }
+  const phrase=best&&bestScore>=2?String(best.phrase||'').trim():'';
+  return phrase&&!RAP_META_RE.test(phrase)?phrase:'';
+}
+function registeredRapPhraseFor(it){
+  const hay=rapHay(it);
+  for(const [re,phrase] of RAP_RULES){
+    re.lastIndex=0;
+    if(re.test(hay)&&!RAP_META_RE.test(phrase))return phrase;
+  }
+  return '';
+}
+function legalBigrams(text){
+  const chars=Array.from(String(text||'').replace(/[\s、。！？「」『』（）()・]/g,''));
+  const set=new Set();
+  for(let i=0;i<chars.length-1;i++)set.add(chars[i]+chars[i+1]);
+  return set;
+}
+function legalSimilarity(a,b){
+  const aa=legalBigrams(a),bb=legalBigrams(b);
+  let score=0;
+  for(const x of aa)if(bb.has(x))score++;
+  return score;
+}
+function relatedCorrectProposition(it){
+  if(it.type!=='proposition')return null;
+  const candidates=propositions.filter(p=>
+    p.id!==it.id&&p.correct===true&&p.subject===it.subject&&
+    ((it.tag&&p.tag===it.tag)||(it.field&&p.field===it.field))
+  );
+  let best=null,bestScore=-1;
+  for(const p of candidates){
+    const score=(it.tag&&p.tag===it.tag?100:0)+(it.field&&p.field===it.field?35:0)+legalSimilarity(it.statement,p.statement);
+    if(score>bestScore){best=p;bestScore=score;}
+  }
+  return best;
+}
+function relatedQuestionExplanation(it){
+  const pool=[...mockQuestions,...predicted].filter(q=>q.explanation&&(!it.subject||q.subject===it.subject));
+  const keys=[it.tag,it.field,it.topic].filter(Boolean).map(String);
+  let best='',bestScore=0;
+  for(const q of pool){
+    const qKey=[q.field,q.topic,q.subject].filter(Boolean).join('｜');
+    let score=legalSimilarity(it.statement||it.stem,q.stem||'');
+    for(const k of keys){
+      if(qKey===k)score+=80;
+      else if(qKey.includes(k)||k.includes(qKey))score+=35;
+    }
+    if(score>bestScore){best=q.explanation;bestScore=score;}
+  }
+  return bestScore>=35?String(best||''):'';
+}
+function cleanLegalText(text){
+  return String(text||'')
+    .replace(/\s+/g,' ')
+    .replace(/^\s*(?:正解|解説|ポイント)\s*[:：]\s*/,'')
+    .replace(/ここを声で\s*3回。?/g,'')
+    .replace(/要件[・、]例外[・、]効果[^。！？]*[。！？]?/g,'')
+    .replace(/この肢は[○×][。．]?/g,'')
+    .replace(/論点\s*[:：][^。！？\n]*[。！？]?/g,'')
+    .replace(/誤肢パターン\s*[:：][^。！？\n]*[。！？]?/g,'')
+    .trim();
+}
+function compactRapText(text){
+  let s=cleanLegalText(text)
+    .replace(/原則として/g,'原則')
+    .replace(/することができる/g,'できる')
+    .replace(/することはできない/g,'できない')
+    .replace(/しなければならない/g,'必要')
+    .replace(/する必要がある/g,'必要')
+    .replace(/とされている/g,'')
+    .replace(/と解されている/g,'')
+    .replace(/である。/g,'。')
+    .replace(/である$/,'')
+    .replace(/。{2,}/g,'。')
+    .trim();
+  if(!s)return '';
+  const sentences=(s.match(/[^。！？]+[。！？]?/g)||[s]).map(x=>x.trim()).filter(Boolean);
+  let out='';
+  for(const sentence of sentences.slice(0,2)){
+    const candidate=(out+sentence).trim();
+    if(Array.from(candidate).length<=42||Array.from(out).length<18)out=candidate;
+    else break;
+  }
+  if(!out)out=sentences[0]||s;
+  return out.trim();
+}
+function correctRuleSourceFor(it,expl=''){
+  const raw=cleanLegalText(expl);
+  if(raw&&!RAP_META_RE.test(raw))return raw;
 
-  // For questions with an explanation, compress the first useful sentence.
-  const core=String(expl||'').replace(/\s+/g,' ').split(/[。！？]/).find(x=>x.trim().length>=8);
-  if(core){
-    const short=core.trim().slice(0,52);
-    return (short.length<core.trim().length?short+'…':short)+'。ここを声で3回。';
-  }
-  // For proposition drills, avoid repeating a false proposition as if it were true.
   if(it.type==='proposition'){
-    return `${it.correct?'この肢は○':'この肢は×'}。論点「${it.tag||it.field||'ここ'}」、罠は「${it.trap||'入替え'}」。`;
+    if(it.correct===true&&it.statement)return String(it.statement);
+    const curated=curatedRapPhraseFor(it);
+    if(curated)return curated;
+    const registered=registeredRapPhraseFor(it);
+    if(registered)return registered;
+    const sibling=relatedCorrectProposition(it);
+    if(sibling?.statement)return String(sibling.statement);
+    const related=relatedQuestionExplanation(it);
+    if(related)return related;
+    return '';
   }
-  return `${truth||'正解を確認'}。要件・例外・効果、3拍で覚える。`;
+
+  if(it.explanation)return cleanLegalText(it.explanation);
+  if(it.model)return cleanLegalText(it.model);
+  const related=relatedQuestionExplanation(it);
+  return related||'';
+}
+function sanitizeRapPhrase(text){
+  const clean=cleanLegalText(text);
+  const units=(clean.match(/[^。！？]+[。！？]?/g)||[clean])
+    .map(x=>x.trim())
+    .filter(x=>x&&!RAP_META_RE.test(x));
+  return units.join('').trim();
+}
+function rapPhraseFor(it, truth='', expl=''){
+  // 1. Curated mnemonics are authoritative and must never be overwritten by generic generation.
+  const curated=sanitizeRapPhrase(curatedRapPhraseFor(it));
+  if(curated)return curated;
+
+  // 2. Hand-written topic rules are the next priority.
+  const registered=sanitizeRapPhrase(registeredRapPhraseFor(it));
+  if(registered)return registered;
+
+  // 3. Generate only from a source known to state a correct rule.
+  //    A false proposition is never reused verbatim; use a correct sibling/explanation instead.
+  const source=correctRuleSourceFor(it,expl);
+  const compact=sanitizeRapPhrase(compactRapText(source));
+  if(compact)return compact;
+
+  // Final safety fallback: use a related verified explanation, never a false statement or a tag label.
+  return sanitizeRapPhrase(compactRapText(relatedQuestionExplanation(it)))||'正しいルールを本文で確認';
+}
+function shortExplanationText(text){
+  const s=cleanLegalText(text);
+  if(!s)return '';
+  const parts=(s.match(/[^。！？]+[。！？]?/g)||[s]).map(x=>x.trim()).filter(Boolean);
+  return parts.slice(0,2).join('');
+}
+function answerTextFor(it){
+  if(it.type==='proposition')return `正解：${it.correct?'○ 正しい':'× 誤り'}`;
+  if(it.format==='多肢選択')return `正解：${(it.answers||[]).join(' / ')}`;
+  if(it.format==='記述式')return `模範解答：${it.model||'解答例を確認'}`;
+  return `正解：${it.answers?.[0]||''}`;
+}
+function shortExplanationFor(it,expl=''){
+  if(it.type==='proposition'){
+    const rule=compactRapText(correctRuleSourceFor(it,expl))||rapPhraseFor(it,'',expl);
+    return it.correct?`正しいルール：${rule}`:`この記述は誤り。正しくは「${rule}」。`;
+  }
+  return shortExplanationText(expl||it.explanation||it.model||'')||'正解の根拠を確認してください。';
+}
+function unknownResultHtml(it,expl=''){
+  const answer=answerTextFor(it);
+  const shortExpl=shortExplanationFor(it,expl);
+  return `<div class="feedback bad"><h4>${esc(answer)}</h4><p>${nl(shortExpl)}</p>${it.source?`<p style="margin-top:7px"><a href="${esc(it.source)}" target="_blank" rel="noopener">根拠資料を開く</a></p>`:''}</div>`;
 }
 
 function splitRapBeats(text){
@@ -543,6 +689,14 @@ async function speakRap(text,mode='rhythm3'){
       await waitMs(Math.max(70,beatMs-elapsed));
     }
 
+    const remainder=beats.length%4;
+    if(remainder){
+      for(let r=remainder;r<4;r++){
+        rapBeat(r,r===3);
+        await waitMs(Math.round(beatMs*.62));
+      }
+    }
+
     // two-beat fill between rounds, so each repeat feels like a musical phrase.
     if(p<passes.length-1){
       rapBeat(0,false);await waitMs(Math.round(beatMs*.45));
@@ -552,7 +706,7 @@ async function speakRap(text,mode='rhythm3'){
 }
 function rapHtml(it,truth,expl){
   const rap=rapPhraseFor(it,truth,expl);
-  return `<div class="rap-box"><div class="rap-label">🎤 4拍・口ずさみ3回</div><div class="rap-phrase">${esc(rap)}</div><div class="rap-hint">低 → 高 → 低 → 高。短いフレーズを1拍ずつ、4拍目と語尾を強くします。</div><div class="rap-actions"><button class="btn secondary" data-speak-rap="1">🎵 4拍ラップで3回</button><button class="btn outline" data-speak-normal="1">▶ 普通に読む</button></div><button class="btn outline full" data-repeat-rap="1" style="margin-top:8px">声に出した回数 0/3</button></div>`;
+  return `<div class="rap-box"><div class="rap-label">🎤 4拍・口ずさみ</div><div class="rap-phrase">${nl(rap)}</div><div class="rap-actions"><button class="btn secondary" data-speak-rap="1">🎵 4拍ラップ</button><button class="btn outline" data-speak-normal="1">▶ 普通に読む</button></div><button class="btn outline full" data-repeat-rap="1" style="margin-top:8px">声に出した回数 0/3</button></div>`;
 }
 function submitDontKnow(it){
   if(studySession.submitted)return;
@@ -565,13 +719,14 @@ function submitDontKnow(it){
     document.querySelectorAll('[data-multi]').forEach(x=>x.disabled=true);
     const ms=document.getElementById('multiSubmit'); if(ms)ms.disabled=true;
   }
-  const truth=it.type==='proposition'?(it.correct?'○ 正しい':'× 誤り'):(it.format==='多肢選択'?`正解：${(it.answers||[]).join(' / ')}`:`正解：${it.answers?.[0]||''}`);
-  const expl=it.type==='proposition'?`論点：${it.tag||''}\n誤肢パターン：${it.trap||''}`:(it.explanation||'');
+  const rawExpl=it.explanation||'';
+  const answer=answerTextFor(it);
   recordProgress(it.id,false,'none',{lastSkipped:true});
   const fb=document.getElementById('studyFeedback');
-  fb.innerHTML=`<div class="feedback bad"><h4>？ わからない → 正解を確認　${esc(truth)}</h4><p>${nl(expl)}</p>${it.source?`<p style="margin-top:7px"><a href="${esc(it.source)}" target="_blank" rel="noopener">根拠資料を開く</a></p>`:''}</div>${rapHtml(it,truth,expl)}<p class="note" style="margin-top:10px">未回答として記録し、最優先で復習に回します。適当に選ぶ必要はありません。</p><button class="btn full" id="dontKnowNext" style="margin-top:10px">次の問題へ</button>`;
-  const rap=rapPhraseFor(it,truth,expl);
-  document.querySelector('[data-speak-rap]')?.addEventListener('click',()=>speakRap(rap,'rhythm3'));document.querySelector('[data-speak-normal]')?.addEventListener('click',()=>speakRap(rap,'normal'));
+  fb.innerHTML=`${unknownResultHtml(it,rawExpl)}${rapHtml(it,answer,rawExpl)}<p class="note" style="margin-top:10px">未回答として記録し、最優先で復習に回します。適当に選ぶ必要はありません。</p><button class="btn full" id="dontKnowNext" style="margin-top:10px">次の問題へ</button>`;
+  const rap=rapPhraseFor(it,answer,rawExpl);
+  document.querySelector('[data-speak-rap]')?.addEventListener('click',()=>speakRap(rap,'rhythm3'));
+  document.querySelector('[data-speak-normal]')?.addEventListener('click',()=>speakRap(rap,'normal'));
   const repeatBtn=document.querySelector('[data-repeat-rap]');
   if(repeatBtn){
     let n=0;
@@ -654,21 +809,22 @@ function renderMockQuestion(){
     }).join('')}</div>`;
   }else if(q.format==='多肢選択'){
     if(revealed){
-      body=`<div class="wordbank">${nl(q.wordbank)}</div><div class="feedback bad"><h4>正解</h4><p>${esc((q.answers||[]).join(' / '))}</p></div>`;
+      body=`<div class="wordbank">${nl(q.wordbank)}</div>`;
     }else{
       const a=Array.isArray(saved)?saved:['','','',''];
       body=`<div class="wordbank">${nl(q.wordbank)}</div><div class="multi-grid">${['ア','イ','ウ','エ'].map((x,i)=>`<div class="field"><label>${x}</label><select data-mock-multi="${i}"><option value="">選択</option>${Array.from({length:20},(_,j)=>`<option value="${j+1}" ${String(a[i])===String(j+1)?'selected':''}>${j+1}</option>`).join('')}</select></div>`).join('')}</div>`;
     }
   }else{
     if(revealed){
-      body=`<div class="feedback bad"><h4>模範解答</h4><p>${nl(q.model||'')}</p></div>`;
+      body='';
     }else{
       body=`<div class="field"><label>答案</label><textarea id="mockWritten" placeholder="40字程度">${esc(saved||'')}</textarea></div>`;
     }
   }
 
+  const unknownAnswer=answerTextFor(q);
   const unknownBox = revealed
-    ? `<div class="feedback bad" style="margin-top:12px"><h4>？ わからない → 0点扱いで正解を確認</h4><p>${nl(q.explanation||'')}</p>${q.source?`<p style="margin-top:7px"><a href="${esc(q.source)}" target="_blank" rel="noopener">根拠資料を開く</a></p>`:''}</div>${rapHtml(q,q.format==='多肢選択'?`正解：${(q.answers||[]).join(' / ')}`:q.format==='記述式'?'模範解答を確認':`正解：${q.answers?.[0]||''}`,q.explanation||'')}`
+    ? `${unknownResultHtml(q,q.explanation||'')}${rapHtml(q,unknownAnswer,q.explanation||'')}`
     : `<button class="btn outline full" id="mockDontKnow" style="margin-top:12px;border-color:#e0b15d;color:#8b5a00">？ わからない（0点で答えを見る）</button>`;
 
   main.innerHTML=`<div class="study-head"><div><strong>問 ${q.no} / 60</strong><div class="q-meta" style="margin:5px 0 0"><span class="badge">${esc(q.subject)}</span><span class="badge">${esc(q.field)}</span></div></div><div class="mock-timer" id="mockTimer">${formatTime(mockRemaining())}</div></div><div class="question-card"><p class="q-stem">${nl(q.stem)}</p>${body}${unknownBox}<div class="mock-nav"><button class="btn secondary" id="mockPrev" ${mockSession.idx===0?'disabled':''}>← 前</button><button class="btn secondary" id="mockNext">${mockSession.idx===59?'確認へ':'次 →'}</button></div><div class="mock-grid">${qs.map((x,i)=>`<button data-jump="${i}" class="${i===mockSession.idx?'current':''} ${mockSession.unknowns[x.id]?'unknown':(mockSession.answers[x.id]!=null&&mockSession.answers[x.id]!==''?'done':'')}">${x.no}</button>`).join('')}</div><button class="btn danger full" id="finishMockBtn" style="margin-top:14px">模試を終了して採点へ</button></div>`;
@@ -686,7 +842,7 @@ function renderMockQuestion(){
   });
 
   if(revealed){
-    const rap=rapPhraseFor(q,q.format==='多肢選択'?`正解：${(q.answers||[]).join(' / ')}`:q.format==='記述式'?'模範解答を確認':`正解：${q.answers?.[0]||''}`,q.explanation||'');
+    const rap=rapPhraseFor(q,answerTextFor(q),q.explanation||'');
     document.querySelector('[data-speak-rap]')?.addEventListener('click',()=>speakRap(rap,'rhythm3'));document.querySelector('[data-speak-normal]')?.addEventListener('click',()=>speakRap(rap,'normal'));
     const repeatBtn=document.querySelector('[data-repeat-rap]');
     if(repeatBtn){
@@ -792,7 +948,7 @@ function closeModal(){modalRoot.innerHTML='';}
 
 window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredInstallPrompt=e;if(route==='settings')renderSettings();});
 if('serviceWorker' in navigator && location.protocol.startsWith('http')){
-  navigator.serviceWorker.register('./sw.js?v=9',{updateViaCache:'none'}).then(reg=>{
+  navigator.serviceWorker.register('./sw.js?v=10',{updateViaCache:'none'}).then(reg=>{
     reg.update().catch(()=>{});
   }).catch(console.warn);
   let reloading=false;

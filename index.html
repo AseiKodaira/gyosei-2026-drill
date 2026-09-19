@@ -52,7 +52,7 @@ button{cursor:pointer}
   <div id="app">
     <header class="topbar">
       <div>
-        <div class="eyebrow">行政書士試験 2026 <span style="opacity:.55;font-weight:700">v1.0.4</span></div>
+        <div class="eyebrow">行政書士試験 2026 <span style="opacity:.55;font-weight:700">v1.0.5</span></div>
         <h1 id="pageTitle">ホーム</h1>
       </div>
       <button class="icon-btn" id="quickReviewBtn" aria-label="今日の復習">↻</button>
@@ -81,7 +81,7 @@ window.GYOSEI_DATA={"mocks":{"mock1":[{"id":"MOCK1-01","mock":"mock1","no":1,"fo
 'use strict';
 
 const DATA = window.GYOSEI_DATA || {mocks:{}, predicted30:[], mnemonics:[], propositions:[]};
-const APP_VERSION = '1.0.4';
+const APP_VERSION = '1.0.5';
 const STORAGE_KEY = 'gyosei2026_state_v1';
 const EXAM_DATE_DEFAULT = '2026-11-08';
 const INTERVALS = [1,3,7,14,30];
@@ -411,17 +411,69 @@ function rapPhraseFor(it, truth='', expl=''){
   return `${truth||'正解を確認'}。要件・例外・効果、3拍で覚える。`;
 }
 
-function speakRap(text){
+function splitRapBeats(text){
+  const s=String(text||'').replace(/\s+/g,' ').trim();
+  const parts=s
+    .replace(/[。！？]/g,m=>m+'|')
+    .replace(/[、，]/g,m=>m+'|')
+    .replace(/・/g,'・|')
+    .split('|').map(x=>x.trim()).filter(Boolean);
+  if(parts.length>1)return parts;
+  if(s.length<=14)return [s];
+  const size=Math.ceil(s.length/3);
+  return [s.slice(0,size),s.slice(size,size*2),s.slice(size*2)].filter(Boolean);
+}
+function waitMs(ms){return new Promise(r=>setTimeout(r,ms));}
+function speakOne(text,rate,pitch){
+  return new Promise(resolve=>{
+    const u=new SpeechSynthesisUtterance(text);
+    u.lang='ja-JP';u.rate=rate;u.pitch=pitch;u.volume=1;
+    u.onend=resolve;u.onerror=resolve;
+    speechSynthesis.speak(u);
+  });
+}
+function beatClick(freq=180,duration=.04,volume=.025){
+  try{
+    const AC=window.AudioContext||window.webkitAudioContext;
+    if(!AC)return;
+    const ctx=beatClick.ctx||(beatClick.ctx=new AC());
+    if(ctx.state==='suspended')ctx.resume();
+    const osc=ctx.createOscillator(),gain=ctx.createGain();
+    osc.type='sine';osc.frequency.value=freq;
+    gain.gain.setValueAtTime(volume,ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(.0001,ctx.currentTime+duration);
+    osc.connect(gain);gain.connect(ctx.destination);
+    osc.start();osc.stop(ctx.currentTime+duration);
+  }catch(e){}
+}
+async function speakRap(text,mode='rhythm3'){
   if(!('speechSynthesis' in window)){toast('この端末では読み上げ非対応です');return;}
   speechSynthesis.cancel();
-  const u=new SpeechSynthesisUtterance(text);
-  u.lang='ja-JP'; u.rate=.88; u.pitch=1.03;
-  speechSynthesis.speak(u);
+  if(mode==='normal'){await speakOne(text,.9,1.02);return;}
+  const beats=splitRapBeats(text);
+  const passes=[
+    {rate:.94,pitch:1.02,pause:210},
+    {rate:1.08,pitch:1.07,pause:160},
+    {rate:.90,pitch:.98,pause:260}
+  ];
+  toast('🥁 リズム読み上げ ×3');
+  for(let p=0;p<passes.length;p++){
+    const pass=passes[p];
+    beatClick(170,.04,.035);await waitMs(140);
+    beatClick(220,.04,.035);await waitMs(190);
+    for(let i=0;i<beats.length;i++){
+      const last=i===beats.length-1;
+      beatClick(last?260:190,.035,.022);
+      await waitMs(55);
+      await speakOne(beats[i],last?pass.rate*.93:pass.rate,last?pass.pitch*.94:pass.pitch);
+      await waitMs(last?pass.pause+140:pass.pause);
+    }
+    if(p<passes.length-1)await waitMs(300);
+  }
 }
-
 function rapHtml(it,truth,expl){
   const rap=rapPhraseFor(it,truth,expl);
-  return `<div class="rap-box"><div class="rap-label">🎤 口ずさみ3回</div><div class="rap-phrase">${esc(rap)}</div><div class="rap-hint">声に出して3回 → 画面を見ずに1回言えたら次へ。</div><div class="rap-actions"><button class="btn secondary" data-speak-rap="1">▶ 読み上げ</button><button class="btn outline" data-repeat-rap="1">3回チェック</button></div></div>`;
+  return `<div class="rap-box"><div class="rap-label">🎤 口ずさみ3回</div><div class="rap-phrase">${esc(rap)}</div><div class="rap-hint">意味のかたまりごとに、一定の拍で3周します。</div><div class="rap-actions"><button class="btn secondary" data-speak-rap="1">🥁 リズムで3回</button><button class="btn outline" data-speak-normal="1">▶ 普通に読む</button></div><button class="btn outline full" data-repeat-rap="1" style="margin-top:8px">声に出した回数 0/3</button></div>`;
 }
 function submitDontKnow(it){
   if(studySession.submitted)return;
@@ -440,11 +492,11 @@ function submitDontKnow(it){
   const fb=document.getElementById('studyFeedback');
   fb.innerHTML=`<div class="feedback bad"><h4>？ わからない → 正解を確認　${esc(truth)}</h4><p>${nl(expl)}</p>${it.source?`<p style="margin-top:7px"><a href="${esc(it.source)}" target="_blank" rel="noopener">根拠資料を開く</a></p>`:''}</div>${rapHtml(it,truth,expl)}<p class="note" style="margin-top:10px">未回答として記録し、最優先で復習に回します。適当に選ぶ必要はありません。</p><button class="btn full" id="dontKnowNext" style="margin-top:10px">次の問題へ</button>`;
   const rap=rapPhraseFor(it,truth,expl);
-  document.querySelector('[data-speak-rap]')?.addEventListener('click',()=>speakRap(rap));
+  document.querySelector('[data-speak-rap]')?.addEventListener('click',()=>speakRap(rap,'rhythm3'));document.querySelector('[data-speak-normal]')?.addEventListener('click',()=>speakRap(rap,'normal'));
   const repeatBtn=document.querySelector('[data-repeat-rap]');
   if(repeatBtn){
     let n=0;
-    repeatBtn.addEventListener('click',()=>{n++; repeatBtn.textContent=n>=3?'✓ 3回言えた':`${n}/3 回`; if(n>=3)repeatBtn.disabled=true;});
+    repeatBtn.addEventListener('click',()=>{n++; repeatBtn.textContent=n>=3?'✓ 3回言えた':`声に出した回数 ${n}/3`; if(n>=3)repeatBtn.disabled=true;});
   }
   document.getElementById('dontKnowNext').onclick=nextStudy;
 }
@@ -556,11 +608,11 @@ function renderMockQuestion(){
 
   if(revealed){
     const rap=rapPhraseFor(q,q.format==='多肢選択'?`正解：${(q.answers||[]).join(' / ')}`:q.format==='記述式'?'模範解答を確認':`正解：${q.answers?.[0]||''}`,q.explanation||'');
-    document.querySelector('[data-speak-rap]')?.addEventListener('click',()=>speakRap(rap));
+    document.querySelector('[data-speak-rap]')?.addEventListener('click',()=>speakRap(rap,'rhythm3'));document.querySelector('[data-speak-normal]')?.addEventListener('click',()=>speakRap(rap,'normal'));
     const repeatBtn=document.querySelector('[data-repeat-rap]');
     if(repeatBtn){
       let n=0;
-      repeatBtn.addEventListener('click',()=>{n++;repeatBtn.textContent=n>=3?'✓ 3回言えた':`${n}/3 回`;if(n>=3)repeatBtn.disabled=true;});
+      repeatBtn.addEventListener('click',()=>{n++;repeatBtn.textContent=n>=3?'✓ 3回言えた':`声に出した回数 ${n}/3`;if(n>=3)repeatBtn.disabled=true;});
     }
   }
   document.querySelectorAll('[data-jump]').forEach(b=>b.onclick=()=>goMock(Number(b.dataset.jump)));

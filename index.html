@@ -735,11 +735,11 @@ function rapTone(freq,duration=.04,volume=.012,type='sine',delay=0){
 function rapBeat(beatInBar,accent=false){
   // Subtle backing only; the voice stays in front.
   if(beatInBar===0||beatInBar===2){
-    rapTone(82,.09,accent?.026:.018,'triangle');
+    rapTone(82,.09,accent ? .026 : .018,'triangle');
   }else{
-    rapTone(210,.045,accent?.018:.012,'sine');
+    rapTone(210,.045,accent ? .018 : .012,'sine');
   }
-  rapTone(950,.018,accent?.008:.005,'sine',.01);
+  rapTone(950,.018,accent ? .008 : .005,'sine',.01);
 }
 async function countIn4(beatMs){
   for(let b=0;b<4;b++){
@@ -769,8 +769,8 @@ async function speakRap(text,mode='rhythm3'){
     const last=i===beats.length-1;
     const strong=beatInBar===3||last;
     // Keep the requested low/high alternation, but subtle enough to sound like a person.
-    const pitch=beatInBar%2===0?.97:1.035;
-    const rate=strong?.92:.96;
+    const pitch=beatInBar%2===0 ? .97 : 1.035;
+    const rate=strong ? .92 : .96;
     const started=performance.now();
 
     rapBeat(beatInBar,strong);

@@ -81,7 +81,7 @@ window.GYOSEI_DATA={"mocks":{"mock1":[{"id":"MOCK1-01","mock":"mock1","no":1,"fo
 'use strict';
 
 const DATA = window.GYOSEI_DATA || {mocks:{}, predicted30:[], mnemonics:[], propositions:[]};
-const APP_VERSION = '1.0.7';
+const APP_VERSION = '1.0.8';
 const STORAGE_KEY = 'gyosei2026_state_v1';
 const EXAM_DATE_DEFAULT = '2026-11-08';
 const INTERVALS = [1,3,7,14,30];
@@ -581,56 +581,138 @@ function unknownResultHtml(it,expl=''){
   return `<div class="feedback bad"><h4>${esc(answer)}</h4><p>${nl(shortExpl)}</p>${it.source?`<p style="margin-top:7px"><a href="${esc(it.source)}" target="_blank" rel="noopener">根拠資料を開く</a></p>`:''}</div>`;
 }
 
+const TTS_READINGS = [
+  ['標準処理期間','ひょうじゅんしょりきかん'],
+  ['不確定期限','ふかくていきげん'],
+  ['履行遅滞','りこうちたい'],
+  ['審査請求','しんさせいきゅう'],
+  ['出訴期間','しゅっそきかん'],
+  ['執行停止','しっこうていし'],
+  ['仮の差止め','かりのさしとめ'],
+  ['仮の義務付け','かりのぎむづけ'],
+  ['原告適格','げんこくてきかく'],
+  ['訴えの利益','うったえのりえき'],
+  ['取消判決','とりけしはんけつ'],
+  ['第三者効','だいさんしゃこう'],
+  ['国家賠償','こっかばいしょう'],
+  ['法定受託','ほうていじゅたく'],
+  ['住民監査','じゅうみんかんさ'],
+  ['住民訴訟','じゅうみんそしょう'],
+  ['即時取得','そくじしゅとく'],
+  ['善意無過失','ぜんいむかしつ'],
+  ['占有改定','せんゆうかいてい'],
+  ['債権者代位','さいけんしゃだいい'],
+  ['物上代位','ぶつじょうだいい'],
+  ['先取特権','さきどりとっけん'],
+  ['財産分与','ざいさんぶんよ'],
+  ['法定利率','ほうていりりつ'],
+  ['共同親権','きょうどうしんけん'],
+  ['行政指導','ぎょうせいしどう'],
+  ['行政処分','ぎょうせいしょぶん'],
+  ['行政行為','ぎょうせいこうい'],
+  ['行政代執行','ぎょうせいだいしっこう'],
+  ['即時強制','そくじきょうせい'],
+  ['直接強制','ちょくせつきょうせい'],
+  ['職権取消し','しょっけんとりけし'],
+  ['原始的瑕疵','げんしてきかし'],
+  ['違法性の承継','いほうせいのしょうけい'],
+  ['争訟裁断的','そうしょうさいだんてき'],
+  ['調停前置','ちょうていぜんち'],
+  ['公営住宅','こうえいじゅうたく'],
+  ['未確立療法','みかくりつりょうほう'],
+  ['到達主義','とうたつしゅぎ'],
+  ['社会保障','しゃかいほしょう'],
+  ['他人物売買','たにんぶつばいばい'],
+  ['構造計算偽装','こうぞうけいさんぎそう'],
+  ['建築確認','けんちくかくにん'],
+  ['開示請求','かいじせいきゅう'],
+  ['部分開示','ぶぶんかいじ'],
+  ['解除条件','かいじょじょうけん'],
+  ['停止条件','ていしじょうけん'],
+  ['審理員','しんりいん'],
+  ['審査庁','しんさちょう'],
+  ['聴聞','ちょうもん'],
+  ['弁明','べんめい'],
+  ['再調査','さいちょうさ'],
+  ['不作為','ふさくい'],
+  ['作為','さくい'],
+  ['附款','ふかん'],
+  ['遡及効','そきゅうこう'],
+  ['営造物','えいぞうぶつ'],
+  ['公権力','こうけんりょく'],
+  ['自治事務','じちじむ'],
+  ['財務会計','ざいむかいけい'],
+  ['極度額','きょくどがく'],
+  ['根抵当','ねていとう'],
+  ['差押え','さしおさえ'],
+  ['牽連性','けんれんせい'],
+  ['賃貸借','ちんたいしゃく'],
+  ['相殺','そうさい'],
+  ['催告','さいこく'],
+  ['帰責','きせき'],
+  ['不法行為','ふほうこうい'],
+  ['故意過失','こいかしつ'],
+  ['遺留分','いりゅうぶん'],
+  ['養育費','よういくひ'],
+  ['代諾','だいだく'],
+  ['復氏','ふくし'],
+  ['先取','さきどり'],
+  ['瑕疵','かし'],
+  ['諮問','しもん'],
+  ['遺言','いごん'],
+  ['留置','りゅうち'],
+  ['親権','しんけん'],
+  ['時効','じこう'],
+  ['OK','オーケー']
+];
+
+function speechTextForRap(text){
+  let out=String(text||'');
+  const rules=[...TTS_READINGS].sort((a,b)=>b[0].length-a[0].length);
+  for(const [from,to] of rules)out=out.split(from).join(to);
+  return out
+    .replace(/([0-9]+)パー/g,'$1パーセント')
+    .replace(/\s+/g,' ')
+    .trim();
+}
+
 function splitRapBeats(text){
   const s=String(text||'').replace(/\s+/g,' ').trim();
   if(!s)return [];
-  const clauses=s.match(/[^、。！？]+[、。！？]?/g)||[s];
-  const beats=[];
-  const softBreaks=new Set(['は','が','を','に','へ','と','で','も','や','の']);
-  for(const clause of clauses){
-    const mark=(clause.match(/[、。！？]+$/)||[''])[0];
-    const core=clause.slice(0,clause.length-mark.length).trim();
-    const chars=Array.from(core);
-    if(!chars.length)continue;
-    if(chars.length<=8){beats.push(core+mark);continue;}
-    let pos=0;
-    const made=[];
-    while(pos<chars.length){
-      const remain=chars.length-pos;
-      if(remain<=8){made.push(chars.slice(pos).join(''));break;}
-      let cut=pos+8;
-      for(let j=cut;j>=pos+4;j--){
-        if(softBreaks.has(chars[j-1])){cut=j;break;}
-      }
-      made.push(chars.slice(pos,cut).join(''));
-      pos=cut;
-    }
-    if(made.length)made[made.length-1]+=mark;
-    beats.push(...made);
-  }
-  return beats;
+  // Never cut at an arbitrary character position: that breaks Japanese compound readings.
+  // Punctuation already marks the semantic chunks used by the curated mnemonic phrases.
+  return (s.match(/[^、。！？]+[、。！？]?/g)||[s])
+    .map(x=>x.trim())
+    .filter(Boolean);
 }
-function splitRapTail(text){
-  const mark=(String(text).match(/[、。！？]+$/)||[''])[0];
-  const core=String(text).slice(0,String(text).length-mark.length).trim();
-  const chars=Array.from(core);
-  if(chars.length<=3)return {head:'',tail:core+mark};
-  const tailLen=chars.length>=8?4:3;
-  return {
-    head:chars.slice(0,-tailLen).join(''),
-    tail:chars.slice(-tailLen).join('')+mark
-  };
-}
+
 function waitMs(ms){return new Promise(r=>setTimeout(r,ms));}
-function speakOne(text,rate,pitch,volume=1){
+
+function preferredJapaneseVoice(){
+  try{
+    const voices=speechSynthesis.getVoices().filter(v=>/^ja(?:-|_)/i.test(v.lang||''));
+    if(!voices.length)return null;
+    const premium=voices.find(v=>/(premium|enhanced|natural)/i.test(v.name||''));
+    return premium||null;
+  }catch(e){return null;}
+}
+
+function speakOne(text,rate=.96,pitch=1,volume=1){
   if(!text)return Promise.resolve();
   return new Promise(resolve=>{
     const u=new SpeechSynthesisUtterance(text);
-    u.lang='ja-JP';u.rate=rate;u.pitch=pitch;u.volume=volume;
-    u.onend=resolve;u.onerror=resolve;
+    u.lang='ja-JP';
+    const voice=preferredJapaneseVoice();
+    if(voice)u.voice=voice;
+    u.rate=rate;
+    u.pitch=pitch;
+    u.volume=volume;
+    u.onend=resolve;
+    u.onerror=resolve;
     speechSynthesis.speak(u);
   });
 }
+
 function rapAudioContext(){
   try{
     const AC=window.AudioContext||window.webkitAudioContext;
@@ -640,7 +722,7 @@ function rapAudioContext(){
     return ctx;
   }catch(e){return null;}
 }
-function rapTone(freq,duration=.04,volume=.02,type='sine',delay=0){
+function rapTone(freq,duration=.04,volume=.012,type='sine',delay=0){
   const ctx=rapAudioContext();if(!ctx)return;
   const t=ctx.currentTime+delay;
   const osc=ctx.createOscillator(),gain=ctx.createGain();
@@ -651,80 +733,60 @@ function rapTone(freq,duration=.04,volume=.02,type='sine',delay=0){
   osc.start(t);osc.stop(t+duration);
 }
 function rapBeat(beatInBar,accent=false){
-  // tiny synthetic backing track: kick on 1/3, snare on 2/4, hat every beat.
-  rapTone(1200,.025,accent ? .018 : .011,'square');
+  // Subtle backing only; the voice stays in front.
   if(beatInBar===0||beatInBar===2){
-    rapTone(86,.095,accent ? .055 : .038,'triangle');
-    rapTone(52,.12,accent ? .03 : .02,'sine',.018);
+    rapTone(82,.09,accent?.026:.018,'triangle');
   }else{
-    rapTone(235,.055,accent ? .04 : .026,'square');
-    rapTone(470,.035,accent ? .022 : .014,'triangle',.012);
+    rapTone(210,.045,accent?.018:.012,'sine');
   }
-  if(beatInBar===3)rapTone(760,.05,.018,'square',.03);
+  rapTone(950,.018,accent?.008:.005,'sine',.01);
 }
 async function countIn4(beatMs){
   for(let b=0;b<4;b++){
     rapBeat(b,b===3);
-    await waitMs(Math.round(beatMs*.62));
+    await waitMs(beatMs);
   }
 }
 async function speakRap(text,mode='rhythm3'){
   if(!('speechSynthesis' in window)){toast('この端末では読み上げ非対応です');return;}
   speechSynthesis.cancel();
-  if(mode==='normal'){await speakOne(text,.9,1.02);return;}
+
+  if(mode==='normal'){
+    await speakOne(speechTextForRap(text),.94,1,1);
+    return;
+  }
 
   const beats=splitRapBeats(text);
   if(!beats.length)return;
-  const passes=[
-    {bpm:104,rate:1.08,low:.82,high:1.18},
-    {bpm:112,rate:1.12,low:.86,high:1.24},
-    {bpm:98, rate:1.02,low:.78,high:1.16}
-  ];
-  toast('🎵 4拍ラップ ×3');
+  const bpm=94;
+  const beatMs=60000/bpm;
+  toast('🎵 4拍ラップ');
 
-  for(let p=0;p<passes.length;p++){
-    const pass=passes[p];
-    const beatMs=60000/pass.bpm;
-    await countIn4(beatMs);
+  await countIn4(beatMs);
 
-    for(let i=0;i<beats.length;i++){
-      const beatInBar=i%4;
-      const last=i===beats.length-1;
-      const barAccent=beatInBar===3;
-      const strong=barAccent||last;
-      const basePitch=beatInBar%2===0?pass.low:pass.high;
-      const parts=splitRapTail(beats[i]);
-      const started=performance.now();
+  for(let i=0;i<beats.length;i++){
+    const beatInBar=i%4;
+    const last=i===beats.length-1;
+    const strong=beatInBar===3||last;
+    // Keep the requested low/high alternation, but subtle enough to sound like a person.
+    const pitch=beatInBar%2===0?.97:1.035;
+    const rate=strong?.92:.96;
+    const started=performance.now();
 
-      rapBeat(beatInBar,strong);
-      await waitMs(35);
+    rapBeat(beatInBar,strong);
+    await waitMs(45);
+    await speakOne(speechTextForRap(beats[i]),rate,strong?pitch+.015:pitch,1);
 
-      if(parts.head){
-        await speakOne(parts.head,pass.rate,basePitch,.96);
-      }
-      await speakOne(
-        parts.tail,
-        strong?pass.rate*.78:pass.rate*.90,
-        basePitch+(strong ? .24 : .09),
-        1
-      );
+    const elapsed=performance.now()-started;
+    const naturalGap=/[。！？]$/.test(beats[i])?150:75;
+    await waitMs(Math.max(naturalGap,beatMs-elapsed));
+  }
 
-      const elapsed=performance.now()-started;
-      await waitMs(Math.max(70,beatMs-elapsed));
-    }
-
-    const remainder=beats.length%4;
-    if(remainder){
-      for(let r=remainder;r<4;r++){
-        rapBeat(r,r===3);
-        await waitMs(Math.round(beatMs*.62));
-      }
-    }
-
-    // two-beat fill between rounds, so each repeat feels like a musical phrase.
-    if(p<passes.length-1){
-      rapBeat(0,false);await waitMs(Math.round(beatMs*.45));
-      rapBeat(1,true);await waitMs(Math.round(beatMs*.70));
+  const remainder=beats.length%4;
+  if(remainder){
+    for(let r=remainder;r<4;r++){
+      rapBeat(r,r===3);
+      await waitMs(beatMs);
     }
   }
 }
@@ -972,7 +1034,7 @@ function closeModal(){modalRoot.innerHTML='';}
 
 window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredInstallPrompt=e;if(route==='settings')renderSettings();});
 if('serviceWorker' in navigator && location.protocol.startsWith('http')){
-  navigator.serviceWorker.register('./sw.js?v=11',{updateViaCache:'none'}).then(reg=>{
+  navigator.serviceWorker.register('./sw.js?v=12',{updateViaCache:'none'}).then(reg=>{
     reg.update().catch(()=>{});
   }).catch(console.warn);
   let reloading=false;

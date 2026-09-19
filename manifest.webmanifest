@@ -2,7 +2,7 @@
   "name":"行政書士2026 Drill",
   "short_name":"行書2026",
   "description":"行政書士試験2026専用のオフライン学習PWA。模試180問・予想30問・過去10年命題ドリル。",
-  "start_url":"./index.html",
+  "start_url":"./",
   "scope":"./",
   "display":"standalone",
   "background_color":"#f5f7fb",

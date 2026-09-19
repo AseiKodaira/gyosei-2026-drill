@@ -81,7 +81,7 @@ window.GYOSEI_DATA={"mocks":{"mock1":[{"id":"MOCK1-01","mock":"mock1","no":1,"fo
 'use strict';
 
 const DATA = window.GYOSEI_DATA || {mocks:{}, predicted30:[], mnemonics:[], propositions:[]};
-const APP_VERSION = '1.0.5';
+const APP_VERSION = '1.0.6';
 const STORAGE_KEY = 'gyosei2026_state_v1';
 const EXAM_DATE_DEFAULT = '2026-11-08';
 const INTERVALS = [1,3,7,14,30];
@@ -413,67 +413,146 @@ function rapPhraseFor(it, truth='', expl=''){
 
 function splitRapBeats(text){
   const s=String(text||'').replace(/\s+/g,' ').trim();
-  const parts=s
-    .replace(/[。！？]/g,m=>m+'|')
-    .replace(/[、，]/g,m=>m+'|')
-    .replace(/・/g,'・|')
-    .split('|').map(x=>x.trim()).filter(Boolean);
-  if(parts.length>1)return parts;
-  if(s.length<=14)return [s];
-  const size=Math.ceil(s.length/3);
-  return [s.slice(0,size),s.slice(size,size*2),s.slice(size*2)].filter(Boolean);
+  if(!s)return [];
+  const clauses=s.match(/[^、。！？]+[、。！？]?/g)||[s];
+  const beats=[];
+  const softBreaks=new Set(['は','が','を','に','へ','と','で','も','や','の']);
+  for(const clause of clauses){
+    const mark=(clause.match(/[、。！？]+$/)||[''])[0];
+    const core=clause.slice(0,clause.length-mark.length).trim();
+    const chars=Array.from(core);
+    if(!chars.length)continue;
+    if(chars.length<=8){beats.push(core+mark);continue;}
+    let pos=0;
+    const made=[];
+    while(pos<chars.length){
+      const remain=chars.length-pos;
+      if(remain<=8){made.push(chars.slice(pos).join(''));break;}
+      let cut=pos+8;
+      for(let j=cut;j>=pos+4;j--){
+        if(softBreaks.has(chars[j-1])){cut=j;break;}
+      }
+      made.push(chars.slice(pos,cut).join(''));
+      pos=cut;
+    }
+    if(made.length)made[made.length-1]+=mark;
+    beats.push(...made);
+  }
+  return beats;
+}
+function splitRapTail(text){
+  const mark=(String(text).match(/[、。！？]+$/)||[''])[0];
+  const core=String(text).slice(0,String(text).length-mark.length).trim();
+  const chars=Array.from(core);
+  if(chars.length<=3)return {head:'',tail:core+mark};
+  const tailLen=chars.length>=8?4:3;
+  return {
+    head:chars.slice(0,-tailLen).join(''),
+    tail:chars.slice(-tailLen).join('')+mark
+  };
 }
 function waitMs(ms){return new Promise(r=>setTimeout(r,ms));}
-function speakOne(text,rate,pitch){
+function speakOne(text,rate,pitch,volume=1){
+  if(!text)return Promise.resolve();
   return new Promise(resolve=>{
     const u=new SpeechSynthesisUtterance(text);
-    u.lang='ja-JP';u.rate=rate;u.pitch=pitch;u.volume=1;
+    u.lang='ja-JP';u.rate=rate;u.pitch=pitch;u.volume=volume;
     u.onend=resolve;u.onerror=resolve;
     speechSynthesis.speak(u);
   });
 }
-function beatClick(freq=180,duration=.04,volume=.025){
+function rapAudioContext(){
   try{
     const AC=window.AudioContext||window.webkitAudioContext;
-    if(!AC)return;
-    const ctx=beatClick.ctx||(beatClick.ctx=new AC());
+    if(!AC)return null;
+    const ctx=rapAudioContext.ctx||(rapAudioContext.ctx=new AC());
     if(ctx.state==='suspended')ctx.resume();
-    const osc=ctx.createOscillator(),gain=ctx.createGain();
-    osc.type='sine';osc.frequency.value=freq;
-    gain.gain.setValueAtTime(volume,ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(.0001,ctx.currentTime+duration);
-    osc.connect(gain);gain.connect(ctx.destination);
-    osc.start();osc.stop(ctx.currentTime+duration);
-  }catch(e){}
+    return ctx;
+  }catch(e){return null;}
+}
+function rapTone(freq,duration=.04,volume=.02,type='sine',delay=0){
+  const ctx=rapAudioContext();if(!ctx)return;
+  const t=ctx.currentTime+delay;
+  const osc=ctx.createOscillator(),gain=ctx.createGain();
+  osc.type=type;osc.frequency.setValueAtTime(freq,t);
+  gain.gain.setValueAtTime(Math.max(.0001,volume),t);
+  gain.gain.exponentialRampToValueAtTime(.0001,t+duration);
+  osc.connect(gain);gain.connect(ctx.destination);
+  osc.start(t);osc.stop(t+duration);
+}
+function rapBeat(beatInBar,accent=false){
+  // tiny synthetic backing track: kick on 1/3, snare on 2/4, hat every beat.
+  rapTone(1200,.025,accent?.018:.011,'square');
+  if(beatInBar===0||beatInBar===2){
+    rapTone(86,.095,accent?.055:.038,'triangle');
+    rapTone(52,.12,accent?.03:.02,'sine',.018);
+  }else{
+    rapTone(235,.055,accent?.04:.026,'square');
+    rapTone(470,.035,accent?.022:.014,'triangle',.012);
+  }
+  if(beatInBar===3)rapTone(760,.05,.018,'square',.03);
+}
+async function countIn4(beatMs){
+  for(let b=0;b<4;b++){
+    rapBeat(b,b===3);
+    await waitMs(Math.round(beatMs*.62));
+  }
 }
 async function speakRap(text,mode='rhythm3'){
   if(!('speechSynthesis' in window)){toast('この端末では読み上げ非対応です');return;}
   speechSynthesis.cancel();
   if(mode==='normal'){await speakOne(text,.9,1.02);return;}
+
   const beats=splitRapBeats(text);
+  if(!beats.length)return;
   const passes=[
-    {rate:.94,pitch:1.02,pause:210},
-    {rate:1.08,pitch:1.07,pause:160},
-    {rate:.90,pitch:.98,pause:260}
+    {bpm:104,rate:1.08,low:.82,high:1.18},
+    {bpm:112,rate:1.12,low:.86,high:1.24},
+    {bpm:98, rate:1.02,low:.78,high:1.16}
   ];
-  toast('🥁 リズム読み上げ ×3');
+  toast('🎵 4拍ラップ ×3');
+
   for(let p=0;p<passes.length;p++){
     const pass=passes[p];
-    beatClick(170,.04,.035);await waitMs(140);
-    beatClick(220,.04,.035);await waitMs(190);
+    const beatMs=60000/pass.bpm;
+    await countIn4(beatMs);
+
     for(let i=0;i<beats.length;i++){
+      const beatInBar=i%4;
       const last=i===beats.length-1;
-      beatClick(last?260:190,.035,.022);
-      await waitMs(55);
-      await speakOne(beats[i],last?pass.rate*.93:pass.rate,last?pass.pitch*.94:pass.pitch);
-      await waitMs(last?pass.pause+140:pass.pause);
+      const barAccent=beatInBar===3;
+      const strong=barAccent||last;
+      const basePitch=beatInBar%2===0?pass.low:pass.high;
+      const parts=splitRapTail(beats[i]);
+      const started=performance.now();
+
+      rapBeat(beatInBar,strong);
+      await waitMs(35);
+
+      if(parts.head){
+        await speakOne(parts.head,pass.rate,basePitch,.96);
+      }
+      await speakOne(
+        parts.tail,
+        strong?pass.rate*.78:pass.rate*.90,
+        basePitch+(strong?.24:.09),
+        1
+      );
+
+      const elapsed=performance.now()-started;
+      await waitMs(Math.max(70,beatMs-elapsed));
     }
-    if(p<passes.length-1)await waitMs(300);
+
+    // two-beat fill between rounds, so each repeat feels like a musical phrase.
+    if(p<passes.length-1){
+      rapBeat(0,false);await waitMs(Math.round(beatMs*.45));
+      rapBeat(1,true);await waitMs(Math.round(beatMs*.70));
+    }
   }
 }
 function rapHtml(it,truth,expl){
   const rap=rapPhraseFor(it,truth,expl);
-  return `<div class="rap-box"><div class="rap-label">🎤 口ずさみ3回</div><div class="rap-phrase">${esc(rap)}</div><div class="rap-hint">意味のかたまりごとに、一定の拍で3周します。</div><div class="rap-actions"><button class="btn secondary" data-speak-rap="1">🥁 リズムで3回</button><button class="btn outline" data-speak-normal="1">▶ 普通に読む</button></div><button class="btn outline full" data-repeat-rap="1" style="margin-top:8px">声に出した回数 0/3</button></div>`;
+  return `<div class="rap-box"><div class="rap-label">🎤 4拍・口ずさみ3回</div><div class="rap-phrase">${esc(rap)}</div><div class="rap-hint">低 → 高 → 低 → 高。短いフレーズを1拍ずつ、4拍目と語尾を強くします。</div><div class="rap-actions"><button class="btn secondary" data-speak-rap="1">🎵 4拍ラップで3回</button><button class="btn outline" data-speak-normal="1">▶ 普通に読む</button></div><button class="btn outline full" data-repeat-rap="1" style="margin-top:8px">声に出した回数 0/3</button></div>`;
 }
 function submitDontKnow(it){
   if(studySession.submitted)return;
@@ -713,7 +792,7 @@ function closeModal(){modalRoot.innerHTML='';}
 
 window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredInstallPrompt=e;if(route==='settings')renderSettings();});
 if('serviceWorker' in navigator && location.protocol.startsWith('http')){
-  navigator.serviceWorker.register('./sw.js?v=8',{updateViaCache:'none'}).then(reg=>{
+  navigator.serviceWorker.register('./sw.js?v=9',{updateViaCache:'none'}).then(reg=>{
     reg.update().catch(()=>{});
   }).catch(console.warn);
   let reloading=false;

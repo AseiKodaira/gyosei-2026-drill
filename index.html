@@ -348,6 +348,8 @@ function renderStudyItem(){
 }
 
 const RAP_RULES = [
+  [/成功したら支払う/, '来るか不明なら条件、来るのが確実なら期限。'],
+  [/不確定期限.*(?:遅滞|履行請求)|(?:遅滞|履行請求).*不確定期限/, '不確定期限、請求か知った時。早い方から遅滞。'],
   [/審査基準|標準処理期間/, '基準は義務、期間は努力。決めた期間は公表だ。'],
   [/行政指導/, '指導は任意、従わぬだけで不利益ダメ。'],
   [/聴聞|弁明/, '聴聞見る・聞く・調書あり。弁明原則、書面なり。'],
@@ -386,7 +388,7 @@ const RAP_RULES = [
   [/養子/, '15歳未満は代諾だ。共同親権なら父母で代諾。']
 ];
 
-const RAP_META_RE=/(?:論点\s*[:：]|誤肢パターン\s*[:：]|ここを声で|この肢は[○×]|要件[・、]例外[・、]効果|覚えよう|正解を確認|罠は\s*[「:：]?)/;
+const RAP_META_RE=/(?:論点\s*(?:[:：]|「)|誤肢パターン\s*(?:[:：]|「)|ここを声で|この肢は[○×]|要件[・、]例外[・、]効果|覚えよう|正解を確認|罠は\s*[「:：]?)/;
 
 function rapHay(it){
   return [it.topic,it.tag,it.field,it.subject,it.stem,it.statement].filter(Boolean).join('｜');
@@ -424,16 +426,14 @@ function legalSimilarity(a,b){
 }
 function relatedCorrectProposition(it){
   if(it.type!=='proposition')return null;
-  const candidates=propositions.filter(p=>
-    p.id!==it.id&&p.correct===true&&p.subject===it.subject&&
-    ((it.tag&&p.tag===it.tag)||(it.field&&p.field===it.field))
-  );
+  const candidates=propositions.filter(p=>p.id!==it.id&&p.correct===true&&p.subject===it.subject);
   let best=null,bestScore=-1;
   for(const p of candidates){
-    const score=(it.tag&&p.tag===it.tag?100:0)+(it.field&&p.field===it.field?35:0)+legalSimilarity(it.statement,p.statement);
+    const lexical=legalSimilarity(it.statement,p.statement);
+    const score=lexical+(it.tag&&p.tag===it.tag?6:0)+(it.field&&p.field===it.field?3:0);
     if(score>bestScore){best=p;bestScore=score;}
   }
-  return best;
+  return bestScore>=8?best:null;
 }
 function relatedQuestionExplanation(it){
   const pool=[...mockQuestions,...predicted].filter(q=>q.explanation&&(!it.subject||q.subject===it.subject));
@@ -457,8 +457,8 @@ function cleanLegalText(text){
     .replace(/ここを声で\s*3回。?/g,'')
     .replace(/要件[・、]例外[・、]効果[^。！？]*[。！？]?/g,'')
     .replace(/この肢は[○×][。．]?/g,'')
-    .replace(/論点\s*[:：][^。！？\n]*[。！？]?/g,'')
-    .replace(/誤肢パターン\s*[:：][^。！？\n]*[。！？]?/g,'')
+    .replace(/論点\s*(?:[:：]|「)[^。！？\n」]*(?:」)?[。！？]?/g,'')
+    .replace(/誤肢パターン\s*(?:[:：]|「)[^。！？\n」]*(?:」)?[。！？]?/g,'')
     .trim();
 }
 function compactRapText(text){
@@ -530,7 +530,7 @@ function rapPhraseFor(it, truth='', expl=''){
   if(compact)return compact;
 
   // Final safety fallback: use a related verified explanation, never a false statement or a tag label.
-  return sanitizeRapPhrase(compactRapText(relatedQuestionExplanation(it)))||'正しいルールを本文で確認';
+  return sanitizeRapPhrase(compactRapText(relatedQuestionExplanation(it)));
 }
 function shortExplanationText(text){
   const s=cleanLegalText(text);

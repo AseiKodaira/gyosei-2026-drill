@@ -75,7 +75,7 @@ window.GYOSEI_DATA={"mocks":{"mock1":[{"id":"MOCK1-01","mock":"mock1","no":1,"fo
 'use strict';
 
 const DATA = window.GYOSEI_DATA || {mocks:{}, predicted30:[], mnemonics:[], propositions:[]};
-const APP_VERSION = '1.0.0';
+const APP_VERSION = '1.0.1';
 const STORAGE_KEY = 'gyosei2026_state_v1';
 const EXAM_DATE_DEFAULT = '2026-11-08';
 const INTERVALS = [1,3,7,14,30];
@@ -329,12 +329,34 @@ function renderStudyItem(){
   }else{
     body=`<p class="q-stem">${nl(it.stem)}</p><div class="field"><label>自分の答案</label><textarea id="writtenAnswer" placeholder="40字程度で書く"></textarea></div><button class="btn full" style="margin-top:10px" id="writtenReveal">模範解答を見る</button>`;
   }
+  if(it.type==='proposition' || it.format==='5肢択一' || it.format==='多肢選択'){
+    body += `<button class="btn secondary full" style="margin-top:12px" data-dontknow="1">？ わからない / 答えを見る</button>`;
+  }
   main.innerHTML=`<div class="study-head"><div><strong>${s.idx+1} / ${s.items.length}</strong><div class="progressbar" style="width:160px;margin-top:6px"><i style="width:${progress}%"></i></div></div><button class="btn secondary" id="quitStudy">終了</button></div><div class="question-card"><div class="q-meta">${metaBadges}</div>${body}<div id="studyFeedback"></div></div>`;
   document.getElementById('quitStudy').onclick=()=>{studySession=null;renderStudyMenu();};
   if(it.type==='proposition') document.querySelectorAll('[data-tf]').forEach(b=>b.onclick=()=>submitStudy(it,b.dataset.tf==='true'));
   else if(it.format==='5肢択一') document.querySelectorAll('[data-choice]').forEach(b=>b.onclick=()=>submitStudy(it,b.dataset.choice));
   else if(it.format==='多肢選択') document.getElementById('multiSubmit').onclick=()=>submitStudy(it,[...document.querySelectorAll('[data-multi]')].map(x=>x.value));
   else document.getElementById('writtenReveal').onclick=()=>submitWrittenStudy(it);
+  document.querySelector('[data-dontknow]')?.addEventListener('click',()=>submitDontKnow(it));
+}
+function submitDontKnow(it){
+  if(studySession.submitted)return;
+  studySession.submitted=true; studySession.score=false;
+  if(it.type==='proposition'){
+    document.querySelectorAll('[data-tf]').forEach(b=>b.disabled=true);
+  }else if(it.format==='5肢択一'){
+    document.querySelectorAll('[data-choice]').forEach(b=>{b.disabled=true;if(b.dataset.choice===String(it.answers?.[0]||''))b.classList.add('correct');});
+  }else if(it.format==='多肢選択'){
+    document.querySelectorAll('[data-multi]').forEach(x=>x.disabled=true);
+    const ms=document.getElementById('multiSubmit'); if(ms)ms.disabled=true;
+  }
+  const truth=it.type==='proposition'?(it.correct?'○ 正しい':'× 誤り'):(it.format==='多肢選択'?`正解：${(it.answers||[]).join(' / ')}`:`正解：${it.answers?.[0]||''}`);
+  const expl=it.type==='proposition'?`論点：${it.tag||''}\n誤肢パターン：${it.trap||''}`:(it.explanation||'');
+  recordProgress(it.id,false,'none',{lastSkipped:true});
+  const fb=document.getElementById('studyFeedback');
+  fb.innerHTML=`<div class="feedback bad"><h4>？ わからない → 正解を確認　${esc(truth)}</h4><p>${nl(expl)}</p>${it.source?`<p style="margin-top:7px"><a href="${esc(it.source)}" target="_blank" rel="noopener">根拠資料を開く</a></p>`:''}</div><p class="note" style="margin-top:10px">未回答として記録し、最優先で復習に回します。適当に選ぶ必要はありません。</p><button class="btn full" id="dontKnowNext" style="margin-top:10px">次の問題へ</button>`;
+  document.getElementById('dontKnowNext').onclick=nextStudy;
 }
 function submitStudy(it, answer){
   if(studySession.submitted)return;
@@ -406,10 +428,11 @@ function renderMockQuestion(){
     const a=Array.isArray(saved)?saved:['','','',''];
     body=`<div class="wordbank">${nl(q.wordbank)}</div><div class="multi-grid">${['ア','イ','ウ','エ'].map((x,i)=>`<div class="field"><label>${x}</label><select data-mock-multi="${i}"><option value="">選択</option>${Array.from({length:20},(_,j)=>`<option value="${j+1}" ${String(a[i])===String(j+1)?'selected':''}>${j+1}</option>`).join('')}</select></div>`).join('')}</div>`;
   } else body=`<div class="field"><label>答案</label><textarea id="mockWritten" placeholder="40字程度">${esc(saved||'')}</textarea></div>`;
-  main.innerHTML=`<div class="study-head"><div><strong>問 ${q.no} / 60</strong><div class="q-meta" style="margin:5px 0 0"><span class="badge">${esc(q.subject)}</span><span class="badge">${esc(q.field)}</span></div></div><div class="mock-timer" id="mockTimer">${formatTime(mockRemaining())}</div></div><div class="question-card"><p class="q-stem">${nl(q.stem)}</p>${body}<div class="mock-nav"><button class="btn secondary" id="mockPrev" ${mockSession.idx===0?'disabled':''}>← 前</button><button class="btn secondary" id="mockNext">${mockSession.idx===59?'確認へ':'次 →'}</button></div><div class="mock-grid">${qs.map((x,i)=>`<button data-jump="${i}" class="${i===mockSession.idx?'current':''} ${mockSession.answers[x.id]!=null&&mockSession.answers[x.id]!==''?'done':''}">${x.no}</button>`).join('')}</div><button class="btn danger full" id="finishMockBtn" style="margin-top:14px">模試を終了して採点へ</button></div>`;
+  main.innerHTML=`<div class="study-head"><div><strong>問 ${q.no} / 60</strong><div class="q-meta" style="margin:5px 0 0"><span class="badge">${esc(q.subject)}</span><span class="badge">${esc(q.field)}</span></div></div><div class="mock-timer" id="mockTimer">${formatTime(mockRemaining())}</div></div><div class="question-card"><p class="q-stem">${nl(q.stem)}</p>${body}<div class="mock-nav"><button class="btn secondary" id="mockPrev" ${mockSession.idx===0?'disabled':''}>← 前</button><button class="btn secondary" id="mockNext">${mockSession.idx===59?'確認へ':'未回答でも次へ →'}</button></div><div class="mock-grid">${qs.map((x,i)=>`<button data-jump="${i}" class="${i===mockSession.idx?'current':''} ${mockSession.answers[x.id]!=null&&mockSession.answers[x.id]!==''?'done':''}">${x.no}</button>`).join('')}</div><button class="btn danger full" id="finishMockBtn" style="margin-top:14px">模試を終了して採点へ</button></div>`;
   bindMockInput(q);
   document.getElementById('mockPrev').onclick=()=>goMock(mockSession.idx-1);
   document.getElementById('mockNext').onclick=()=>mockSession.idx===59?reviewMock():goMock(mockSession.idx+1);
+  const nav=document.querySelector('.mock-nav'); if(nav && !document.getElementById('mockSkipNote')) nav.insertAdjacentHTML('afterend','<p class="note" id="mockSkipNote" style="margin-top:8px">分からない問題は未回答のまま次へ進めます。提出前に未回答一覧で確認できます。</p>');
   document.querySelectorAll('[data-jump]').forEach(b=>b.onclick=()=>goMock(Number(b.dataset.jump)));
   document.getElementById('finishMockBtn').onclick=()=>{captureMockInput(q); if(confirm('模試を終了して採点へ進みますか？'))finishMock();};
 }

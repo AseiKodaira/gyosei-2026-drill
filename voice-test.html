@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#17365d">
+  <title>Kokoro 日本語5声 試聴</title>
+  <style>
+    :root{--navy:#17365d;--blue:#2f75b5;--bg:#f5f7fb;--card:#fff;--line:#e4e8ef;--ink:#172033;--muted:#667085;--green:#138a53}
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Yu Gothic UI","Yu Gothic",Meiryo,sans-serif;padding-bottom:40px}
+    main{max-width:720px;margin:0 auto;padding:18px 14px}
+    .top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}
+    h1{font-size:22px;margin:0}
+    .back{display:inline-flex;align-items:center;gap:6px;text-decoration:none;color:var(--navy);font-weight:800}
+    .card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:16px;margin-bottom:12px}
+    .lead{font-size:14px;line-height:1.7}
+    .phrase{font-size:21px;line-height:1.65;font-weight:900;color:var(--navy);margin:10px 0}
+    .reading{font-size:12px;line-height:1.7;color:var(--muted);word-break:break-all}
+    .voice{display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center}
+    .voice h2{font-size:17px;margin:0 0 4px}
+    .meta{font-size:11px;color:var(--muted)}
+    button{border:0;border-radius:14px;background:var(--navy);color:#fff;font:inherit;font-weight:850;min-height:46px;padding:10px 16px}
+    button:disabled{opacity:.4}
+    .status{font-size:12px;color:var(--muted);margin-top:10px}
+    .note{font-size:12px;line-height:1.65;color:var(--muted)}
+    .ready{color:var(--green);font-weight:800}
+  </style>
+</head>
+<body>
+<main>
+  <div class="top">
+    <a class="back" href="./index.html">← 学習アプリへ</a>
+    <span style="font-size:11px;color:#667085">比較試聴のみ</span>
+  </div>
+
+  <div class="card">
+    <h1>Kokoro 日本語5声 試聴</h1>
+    <p class="lead">学習本体にはまだ適用しません。まず同じ法律短文を5つの日本語音声で聞き比べて、声質・自然さ・発音を確認します。</p>
+    <div class="phrase" id="phrase">読み込み中…</div>
+    <div class="reading" id="reading"></div>
+    <p class="note">この試聴だけは法律用語の読みを明示して生成します。Kokoro任せの誤読と声質評価を混ぜないためです。</p>
+  </div>
+
+  <div id="voices"></div>
+  <div class="card">
+    <div class="note">評価ポイント：①人っぽさ ②「不確定期限」「履行請求」「履行遅滞」の発音 ③語尾の自然さ。4拍ラップ本体への採用は、声を選んだ後に別工程で行います。</div>
+    <div class="status" id="status"></div>
+  </div>
+</main>
+
+<script>
+let currentAudio=null;
+
+function stopAudio(){
+  if(currentAudio){
+    try{currentAudio.pause();currentAudio.currentTime=0;}catch(e){}
+    currentAudio=null;
+  }
+}
+
+async function playVoice(src,button){
+  stopAudio();
+  document.querySelectorAll('button[data-play]').forEach(b=>b.textContent='▶ 試聴');
+  try{
+    const audio=new Audio(src+'?v='+Date.now());
+    currentAudio=audio;
+    button.textContent='■ 再生中';
+    audio.onended=()=>{button.textContent='▶ 試聴';if(currentAudio===audio)currentAudio=null;};
+    audio.onerror=()=>{button.textContent='▶ 試聴';document.getElementById('status').textContent='音声ファイルを再生できませんでした。';};
+    await audio.play();
+  }catch(e){
+    button.textContent='▶ 試聴';
+    document.getElementById('status').textContent='再生に失敗しました。';
+  }
+}
+
+async function load(){
+  const status=document.getElementById('status');
+  try{
+    const r=await fetch('./audio/kokoro-samples/manifest.json?v='+Date.now(),{cache:'no-store'});
+    if(!r.ok)throw new Error('manifest');
+    const m=await r.json();
+    document.getElementById('phrase').textContent=m.displayText||'';
+    document.getElementById('reading').textContent='読み指定：'+(m.spokenText||'');
+    const wrap=document.getElementById('voices');
+    wrap.innerHTML=(m.voices||[]).map(v=>`
+      <div class="card voice">
+        <div>
+          <h2>${v.label}</h2>
+          <div class="meta">${v.id} ・ ${v.gender}</div>
+        </div>
+        <button data-play="${v.id}" data-src="${v.src||''}" ${v.src?'':'disabled'}>${v.src?'▶ 試聴':'生成待ち'}</button>
+      </div>
+    `).join('');
+    document.querySelectorAll('button[data-play]:not(:disabled)').forEach(b=>{
+      b.onclick=()=>playVoice(b.dataset.src,b);
+    });
+    const ready=(m.voices||[]).filter(v=>v.src).length;
+    status.innerHTML=ready===5?'<span class="ready">5音声すべて生成済み</span>':`現在 ${ready}/5 音声生成済み。GitHub Actions完了後に自動で試聴可能になります。`;
+  }catch(e){
+    status.textContent='Kokoro試聴データを読み込めませんでした。';
+  }
+}
+load();
+</script>
+</body>
+</html>

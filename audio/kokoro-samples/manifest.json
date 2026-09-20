@@ -1,0 +1,42 @@
+{
+  "version": 1,
+  "engine": "Kokoro-82M",
+  "repo": "hexgrad/Kokoro-82M",
+  "sampleRate": 24000,
+  "speed": 0.96,
+  "displayText": "不確定期限、履行請求か知った時。早い方から履行遅滞。",
+  "spokenText": "ふかくていきげん、りこうせいきゅうか しったとき。はやいほうから りこうちたい。",
+  "note": "Trial only. Legal-term readings are explicitly supplied for this sample.",
+  "voices": [
+    {
+      "id": "jf_alpha",
+      "label": "Alpha",
+      "gender": "女性",
+      "src": null
+    },
+    {
+      "id": "jf_gongitsune",
+      "label": "Gongitsune",
+      "gender": "女性",
+      "src": null
+    },
+    {
+      "id": "jf_nezumi",
+      "label": "Nezumi",
+      "gender": "女性",
+      "src": null
+    },
+    {
+      "id": "jf_tebukuro",
+      "label": "Tebukuro",
+      "gender": "女性",
+      "src": null
+    },
+    {
+      "id": "jm_kumo",
+      "label": "Kumo",
+      "gender": "男性",
+      "src": null
+    }
+  ]
+}

@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "generatedAt": null,
+  "displayText": "不確定期限、履行請求か知った時。早い方から履行遅滞。物上代位、牽連性、瑕疵。",
+  "spokenText": "ふかくていきげん、りこうせいきゅうか しったとき。はやいほうから りこうちたい。ぶつじょうだいい、けんれんせい、かし。",
+  "readingPolicy": "Explicit hiragana reading for pronunciation-controlled comparison.",
+  "items": [
+    {
+      "engine": "AivisSpeech",
+      "speaker": "生成待ち",
+      "style": "",
+      "credit": "",
+      "src": null,
+      "rhythm": "tempoDynamicsScale 1.20"
+    },
+    {
+      "engine": "VOICEVOX",
+      "speaker": "生成待ち",
+      "style": "",
+      "credit": "",
+      "src": null,
+      "rhythm": "intonationScale 1.08"
+    }
+  ]
+}

@@ -92,6 +92,7 @@ async function load(){
         <div>
           <h2>${v.engine||'音声'+(i+1)}</h2>
           <div class="meta">${v.speaker||'生成待ち'}${v.style?' ・ '+v.style:''}</div>
+          <div class="meta">${v.credit||''}</div>
           <div class="tag">${v.rhythm||'標準'}</div>
         </div>
         <button data-play="${i}" data-src="${v.src||''}" ${v.src?'':'disabled'}>${v.src?'▶ 試聴':'生成待ち'}</button>

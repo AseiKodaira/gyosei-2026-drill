@@ -52,9 +52,15 @@ def render_voice(pipeline: KPipeline, voice: str) -> np.ndarray:
 def main() -> None:
     OUT_DIR.mkdir(parents=True, exist_ok=True)
 
-    pipeline = KPipeline(lang_code="j")
-    # Use the newer pyopenjtalk-based Japanese G2P for better pitch accent handling.
-    pipeline.g2p = ja.JAG2P(version="pyopenjtalk")
+    # KPipeline defaults to the older fugashi/cutlet Japanese G2P. For this
+    # trial, force Misaki's newer pyopenjtalk path before KPipeline is created.
+    # This avoids a separate MeCab dictionary download and keeps pitch accent data.
+    original_jag2p = ja.JAG2P
+    ja.JAG2P = lambda *args, **kwargs: original_jag2p(version="pyopenjtalk")
+    try:
+        pipeline = KPipeline(lang_code="j")
+    finally:
+        ja.JAG2P = original_jag2p
 
     manifest = {
         "version": 1,

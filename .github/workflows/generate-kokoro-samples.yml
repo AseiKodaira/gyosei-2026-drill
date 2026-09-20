@@ -1,0 +1,52 @@
+name: Generate Kokoro Japanese samples
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/generate-kokoro-samples.yml"
+      - "scripts/generate-kokoro-samples.py"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: generate-kokoro-japanese-samples
+  cancel-in-progress: false
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Install Kokoro Japanese dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install "kokoro>=0.9.4" "misaki[ja]>=0.9.4" soundfile
+
+      - name: Generate five Japanese voice samples
+        run: python scripts/generate-kokoro-samples.py
+
+      - name: Commit samples
+        run: |
+          if git diff --quiet -- audio/kokoro-samples && [ -z "$(git status --porcelain --untracked-files=all audio/kokoro-samples)" ]; then
+            echo "No sample changes."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add audio/kokoro-samples
+          git commit -m "chore: generate Kokoro Japanese voice samples"
+          git push

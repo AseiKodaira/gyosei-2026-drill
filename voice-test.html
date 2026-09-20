@@ -4,9 +4,9 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#17365d">
-  <title>Kokoro 日本語5声 試聴</title>
+  <title>無料日本語音声 比較試聴</title>
   <style>
-    :root{--navy:#17365d;--blue:#2f75b5;--bg:#f5f7fb;--card:#fff;--line:#e4e8ef;--ink:#172033;--muted:#667085;--green:#138a53}
+    :root{--navy:#17365d;--bg:#f5f7fb;--card:#fff;--line:#e4e8ef;--ink:#172033;--muted:#667085;--green:#138a53;--orange:#b54708}
     *{box-sizing:border-box}
     body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Yu Gothic UI","Yu Gothic",Meiryo,sans-serif;padding-bottom:40px}
     main{max-width:720px;margin:0 auto;padding:18px 14px}
@@ -16,15 +16,17 @@
     .card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:16px;margin-bottom:12px}
     .lead{font-size:14px;line-height:1.7}
     .phrase{font-size:21px;line-height:1.65;font-weight:900;color:var(--navy);margin:10px 0}
-    .reading{font-size:12px;line-height:1.7;color:var(--muted);word-break:break-all}
+    .reading{font-size:12px;line-height:1.7;color:var(--muted);word-break:break-word}
     .voice{display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center}
-    .voice h2{font-size:17px;margin:0 0 4px}
-    .meta{font-size:11px;color:var(--muted)}
+    .voice h2{font-size:18px;margin:0 0 4px}
+    .meta{font-size:11px;line-height:1.55;color:var(--muted)}
+    .tag{display:inline-block;margin-top:6px;padding:4px 8px;border-radius:999px;background:#eef3f8;color:var(--navy);font-size:10px;font-weight:800}
     button{border:0;border-radius:14px;background:var(--navy);color:#fff;font:inherit;font-weight:850;min-height:46px;padding:10px 16px}
     button:disabled{opacity:.4}
     .status{font-size:12px;color:var(--muted);margin-top:10px}
     .note{font-size:12px;line-height:1.65;color:var(--muted)}
     .ready{color:var(--green);font-weight:800}
+    .warn{color:var(--orange);font-weight:800}
   </style>
 </head>
 <body>
@@ -35,16 +37,17 @@
   </div>
 
   <div class="card">
-    <h1>Kokoro 日本語5声 試聴</h1>
-    <p class="lead">学習本体にはまだ適用しません。まず同じ法律短文を5つの日本語音声で聞き比べて、声質・自然さ・発音を確認します。</p>
+    <h1>AivisSpeech / VOICEVOX 比較</h1>
+    <p class="lead">Kokoroは発音崩れが大きかったため不採用。次は無料の2方式を、同じ法律短文・同じ読み指定で比較します。学習本体にはまだ適用しません。</p>
     <div class="phrase" id="phrase">読み込み中…</div>
     <div class="reading" id="reading"></div>
-    <p class="note">この試聴だけは法律用語の読みを明示して生成します。Kokoro任せの誤読と声質評価を混ぜないためです。</p>
+    <p class="note">「不確定期限」「履行請求」「履行遅滞」「物上代位」「牽連性」「瑕疵」は、エンジン任せにせず読みをひらがなで固定して生成します。</p>
   </div>
 
   <div id="voices"></div>
+
   <div class="card">
-    <div class="note">評価ポイント：①人っぽさ ②「不確定期限」「履行請求」「履行遅滞」の発音 ③語尾の自然さ。4拍ラップ本体への採用は、声を選んだ後に別工程で行います。</div>
+    <div class="note">評価ポイント：①法律用語を正しく読むか ②日本語として人っぽいか ③語尾が不自然に伸びないか ④暗記用のリズムを後から乗せられそうか。</div>
     <div class="status" id="status"></div>
   </div>
 </main>
@@ -78,28 +81,31 @@ async function playVoice(src,button){
 async function load(){
   const status=document.getElementById('status');
   try{
-    const r=await fetch('./audio/kokoro-samples/manifest.json?v='+Date.now(),{cache:'no-store'});
+    const r=await fetch('./audio/voice-comparison/manifest.json?v='+Date.now(),{cache:'no-store'});
     if(!r.ok)throw new Error('manifest');
     const m=await r.json();
     document.getElementById('phrase').textContent=m.displayText||'';
-    document.getElementById('reading').textContent='読み指定：'+(m.spokenText||'');
-    const wrap=document.getElementById('voices');
-    wrap.innerHTML=(m.voices||[]).map(v=>`
+    document.getElementById('reading').textContent='読み固定：'+(m.spokenText||'');
+    const items=m.items||[];
+    document.getElementById('voices').innerHTML=items.map((v,i)=>`
       <div class="card voice">
         <div>
-          <h2>${v.label}</h2>
-          <div class="meta">${v.id} ・ ${v.gender}</div>
+          <h2>${v.engine||'音声'+(i+1)}</h2>
+          <div class="meta">${v.speaker||'生成待ち'}${v.style?' ・ '+v.style:''}</div>
+          <div class="tag">${v.rhythm||'標準'}</div>
         </div>
-        <button data-play="${v.id}" data-src="${v.src||''}" ${v.src?'':'disabled'}>${v.src?'▶ 試聴':'生成待ち'}</button>
+        <button data-play="${i}" data-src="${v.src||''}" ${v.src?'':'disabled'}>${v.src?'▶ 試聴':'生成待ち'}</button>
       </div>
     `).join('');
     document.querySelectorAll('button[data-play]:not(:disabled)').forEach(b=>{
       b.onclick=()=>playVoice(b.dataset.src,b);
     });
-    const ready=(m.voices||[]).filter(v=>v.src).length;
-    status.innerHTML=ready===5?'<span class="ready">5音声すべて生成済み</span>':`現在 ${ready}/5 音声生成済み。GitHub Actions完了後に自動で試聴可能になります。`;
+    const ready=items.filter(v=>v.src).length;
+    status.innerHTML=ready===2
+      ? '<span class="ready">AivisSpeech / VOICEVOX の2音声とも生成済み</span>'
+      : '<span class="warn">現在 '+ready+'/2。GitHub Actionsで音声生成中です。</span>';
   }catch(e){
-    status.textContent='Kokoro試聴データを読み込めませんでした。';
+    status.textContent='比較音声データを読み込めませんでした。';
   }
 }
 load();

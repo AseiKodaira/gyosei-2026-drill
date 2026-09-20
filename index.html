@@ -81,7 +81,7 @@ window.GYOSEI_DATA={"mocks":{"mock1":[{"id":"MOCK1-01","mock":"mock1","no":1,"fo
 'use strict';
 
 const DATA = window.GYOSEI_DATA || {mocks:{}, predicted30:[], mnemonics:[], propositions:[]};
-const APP_VERSION = '1.0.10';
+const APP_VERSION = '1.0.11';
 const STORAGE_KEY = 'gyosei2026_state_v1';
 const EXAM_DATE_DEFAULT = '2026-11-08';
 const INTERVALS = [1,3,7,14,30];
@@ -792,7 +792,7 @@ async function speakRap(text,mode='rhythm3'){
 }
 function rapHtml(it,truth,expl){
   const rap=rapPhraseFor(it,truth,expl);
-  return `<div class="rap-box"><div class="rap-label">🎤 4拍・口ずさみ</div><div class="rap-phrase">${nl(rap)}</div><div class="rap-actions"><button class="btn secondary" data-speak-rap="1">🎵 4拍ラップ</button><button class="btn outline" data-speak-normal="1">▶ 普通に読む</button></div><div class="rap-hint">現在の学習画面は端末音声。Kokoroは設定から5声比較試聴できます。</div><button class="btn outline full" data-repeat-rap="1" style="margin-top:8px">声に出した回数 0/3</button></div>`;
+  return `<div class="rap-box"><div class="rap-label">🎤 4拍・口ずさみ</div><div class="rap-phrase">${nl(rap)}</div><div class="rap-actions"><button class="btn secondary" data-speak-rap="1">🎵 4拍ラップ</button><button class="btn outline" data-speak-normal="1">▶ 普通に読む</button></div><div class="rap-hint">現在の学習画面は端末音声。AivisSpeech / VOICEVOXは設定から比較試聴できます。</div><button class="btn outline full" data-repeat-rap="1" style="margin-top:8px">声に出した回数 0/3</button></div>`;
 }
 function submitDontKnow(it){
   if(studySession.submitted)return;
@@ -1010,7 +1010,7 @@ function renderSettings(){
     <div class="card settings-block"><h3>学習設定</h3><div class="filters"><div class="field"><label>1日の目標回答数</label><select id="dailyTarget">${[20,30,40,50,60].map(n=>`<option ${n===state.settings.dailyTarget?'selected':''}>${n}</option>`).join('')}</select></div><div class="field"><label>自動セット問題数</label><select id="newDaily">${[10,20,30,40,50].map(n=>`<option ${n===state.settings.newDaily?'selected':''}>${n}</option>`).join('')}</select></div></div><div class="field" style="margin-top:10px"><label>本試験日</label><input id="examDate" type="date" value="${esc(state.settings.examDate)}"></div><button class="btn full" id="saveSettings" style="margin-top:12px">設定を保存</button></div>
     <div class="card settings-block"><h3>データ</h3><p class="note">模試 ${mockQuestions.length}問＋予想 ${predicted.length}問＋命題 ${propositions.length.toLocaleString()}件＋口ずさみ ${mnemonics.length}本。</p><div class="btn-row"><button class="btn secondary" id="exportProgress">進捗を書き出す</button><label class="btn outline" for="importProgress" style="display:inline-flex;align-items:center">進捗を読み込む</label><input id="importProgress" type="file" accept="application/json" hidden></div></div>
     <div class="card settings-block"><h3>iPhoneにアプリとして追加</h3><p class="note">${isStandalone()?'現在ホーム画面アプリとして起動しています。':'HTTPSで公開したURLをSafariで開き、共有 →「ホーム画面に追加」でインストールできます。'} ${location.protocol==='file:'?'現在はファイルとして開いています。学習機能は動きますが、PWAインストールにはHTTPS公開が必要です。':''}</p><button class="btn secondary full" id="installBtn" ${deferredInstallPrompt?'':'disabled'}>インストールを実行</button></div>
-    <div class="card settings-block"><h3>Kokoro 日本語音声テスト</h3><p class="note">無料のKokoro日本語5声を、同じ法律短文で比較試聴します。学習本体にはまだ適用しません。</p><a class="btn secondary full" href="./voice-test.html" style="display:flex;align-items:center;justify-content:center;text-decoration:none;margin-top:10px">5種類を試聴する</a></div>
+    <div class="card settings-block"><h3>無料AI音声 比較テスト</h3><p class="note">AivisSpeechとVOICEVOXを、同じ法律短文・固定読みで比較試聴します。学習本体にはまだ適用しません。</p><a class="btn secondary full" href="./voice-test.html" style="display:flex;align-items:center;justify-content:center;text-decoration:none;margin-top:10px">Aivis / VOICEVOXを試聴</a></div>
     <div class="card settings-block"><h3>プライバシー</h3><p class="note">進捗・弱点・模試答案はこの端末のブラウザ内（localStorage）だけに保存します。アプリ本体から外部サーバーへ送信しません。根拠URLをタップした場合だけ外部サイトを開きます。</p></div>
     <div class="card settings-block danger-zone"><h3>リセット</h3><p class="note">すべての進捗・模試結果を消去します。</p><button class="btn danger full" id="resetProgress">全データをリセット</button></div>
     <p class="note" style="text-align:center">行政書士2026 Drill v${APP_VERSION}</p>`;
@@ -1035,7 +1035,7 @@ function closeModal(){modalRoot.innerHTML='';}
 
 window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredInstallPrompt=e;if(route==='settings')renderSettings();});
 if('serviceWorker' in navigator && location.protocol.startsWith('http')){
-  navigator.serviceWorker.register('./sw.js?v=14',{updateViaCache:'none'}).then(reg=>{
+  navigator.serviceWorker.register('./sw.js?v=15',{updateViaCache:'none'}).then(reg=>{
     reg.update().catch(()=>{});
   }).catch(console.warn);
   let reloading=false;

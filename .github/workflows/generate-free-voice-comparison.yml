@@ -1,0 +1,42 @@
+name: Generate free Japanese voice comparison
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/generate-free-voice-comparison.yml"
+      - "scripts/generate-free-voice-comparison.sh"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: generate-free-japanese-voice-comparison
+  cancel-in-progress: false
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Generate AivisSpeech and VOICEVOX samples
+        run: bash scripts/generate-free-voice-comparison.sh
+
+      - name: Commit comparison audio
+        run: |
+          if git diff --quiet -- audio/voice-comparison && [ -z "$(git status --porcelain --untracked-files=all audio/voice-comparison)" ]; then
+            echo "No comparison audio changes."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add audio/voice-comparison
+          git commit -m "chore: generate free Japanese voice comparison"
+          git push

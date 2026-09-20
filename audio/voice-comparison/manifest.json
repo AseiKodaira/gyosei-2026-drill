@@ -1,24 +1,26 @@
 {
   "version": 1,
-  "generatedAt": null,
+  "generatedAt": "2026-09-20T01:22:31.041741+00:00",
   "displayText": "不確定期限、履行請求か知った時。早い方から履行遅滞。物上代位、牽連性、瑕疵。",
   "spokenText": "ふかくていきげん、りこうせいきゅうか しったとき。はやいほうから りこうちたい。ぶつじょうだいい、けんれんせい、かし。",
-  "readingPolicy": "Explicit hiragana reading for pronunciation-controlled comparison.",
+  "readingPolicy": "The comparison audio uses an explicit hiragana reading. It does not rely on the engines guessing legal-term readings.",
   "items": [
     {
       "engine": "AivisSpeech",
-      "speaker": "生成待ち",
-      "style": "",
-      "credit": "",
-      "src": null,
+      "speaker": "まお",
+      "style": "ノーマル",
+      "styleId": 888753760,
+      "credit": "AivisSpeech / まお",
+      "src": "./audio/voice-comparison/aivis.wav",
       "rhythm": "tempoDynamicsScale 1.20"
     },
     {
       "engine": "VOICEVOX",
-      "speaker": "生成待ち",
-      "style": "",
-      "credit": "",
-      "src": null,
+      "speaker": "四国めたん",
+      "style": "ノーマル",
+      "styleId": 2,
+      "credit": "VOICEVOX:四国めたん",
+      "src": "./audio/voice-comparison/voicevox.wav",
       "rhythm": "intonationScale 1.08"
     }
   ]

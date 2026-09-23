@@ -1,0 +1,57 @@
+name: Generate Style-Bert-VITS2 legal term test
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/generate-sbv2-legal-terms.yml"
+      - "scripts/generate-sbv2-legal-terms.py"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: generate-sbv2-legal-terms
+  cancel-in-progress: false
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+
+      - name: Install CPU inference dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install "torch==2.3.1" --index-url https://download.pytorch.org/whl/cpu
+          python -m pip install "style-bert-vits2" scipy huggingface_hub
+
+      - name: Generate six legal-term samples
+        env:
+          HF_HUB_DISABLE_TELEMETRY: "1"
+          TOKENIZERS_PARALLELISM: "false"
+        run: python scripts/generate-sbv2-legal-terms.py
+
+      - name: Commit samples
+        run: |
+          if git diff --quiet -- audio/sbv2-legal-terms && [ -z "$(git status --porcelain --untracked-files=all audio/sbv2-legal-terms)" ]; then
+            echo "No sample changes."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add audio/sbv2-legal-terms
+          git commit -m "chore: generate Style-Bert-VITS2 legal term samples"
+          git pull --rebase origin main
+          git push

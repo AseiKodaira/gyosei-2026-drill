@@ -26,6 +26,7 @@ MODEL_FILE = f"{MODEL_NAME}/jvnv-F1-jp_e160_s14000.safetensors"
 CONFIG_FILE = f"{MODEL_NAME}/config.json"
 STYLE_FILE = f"{MODEL_NAME}/style_vectors.npy"
 
+# pronunciation gate: terms only
 TERMS = [
     ("不確定期限", "ふかくていきげん"),
     ("履行請求", "りこうせいきゅう"),

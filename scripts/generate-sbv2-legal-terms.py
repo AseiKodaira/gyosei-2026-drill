@@ -26,34 +26,25 @@ MODEL_FILE = f"{MODEL_NAME}/jvnv-F1-jp_e160_s14000.safetensors"
 CONFIG_FILE = f"{MODEL_NAME}/config.json"
 STYLE_FILE = f"{MODEL_NAME}/style_vectors.npy"
 
-# Rework one rejected term at a time.  The first trial passed a hiragana-only
-# string to the Japanese BERT encoder.  That preserved the phoneme sequence but
-# discarded the lexical context of the written term and produced a non-Japanese
-# mora length ("きげーん").  Keep the surface kanji as model input and compare
-# deterministic variants before generating any of the remaining five terms.
+# Rework one rejected term at a time.  The JVNV model is trained on emotional
+# speech and its model card warns that even Neutral can sound expressive.
+# Keep the written term, add a declarative full stop, and suppress intonation.
 TERM = "不確定期限"
 READING = "ふかくていきげん"
 CANDIDATES = [
     {
-        "id": "surface-auto-normal",
-        "label": "候補A",
-        "description": "漢字本文・自動読み／アクセント・標準速度",
-        "fix_reading": False,
+        "id": "neutral-ordinary",
+        "label": "普通読み",
+        "description": "Neutral固定・抑揚35%・標準速度",
         "length": 0.90,
+        "intonation_scale": 0.35,
     },
     {
-        "id": "surface-fixed-normal",
-        "label": "候補B",
-        "description": "漢字本文・読み／アクセント固定・標準速度",
-        "fix_reading": True,
+        "id": "neutral-flatter",
+        "label": "さらに平坦",
+        "description": "Neutral固定・抑揚15%・標準速度",
         "length": 0.90,
-    },
-    {
-        "id": "surface-fixed-compact",
-        "label": "候補C",
-        "description": "漢字本文・読み／アクセント固定・短めの拍",
-        "fix_reading": True,
-        "length": 0.76,
+        "intonation_scale": 0.15,
     },
 ]
 
@@ -97,36 +88,28 @@ def main() -> None:
     )
     model.load()
 
-    normalized_reading = normalize_text(READING)
-    fixed_phones, fixed_tones, _word2ph = g2p(
-        normalized_reading, use_jp_extra=True, raise_yomi_error=True
-    )
-    normalized_surface = normalize_text(TERM)
+    synthesis_text = TERM + "。"
+    normalized_surface = normalize_text(synthesis_text)
     auto_phones, auto_tones, _surface_word2ph = g2p(
         normalized_surface, use_jp_extra=True, raise_yomi_error=True
     )
 
     items = []
     for candidate in CANDIDATES:
-        fix_reading = candidate["fix_reading"]
-        phones = fixed_phones if fix_reading else auto_phones
-        tones = fixed_tones if fix_reading else auto_tones
-
-        # The model must receive the written Japanese term so its BERT features
-        # retain lexical context.  sdp_ratio=0 makes phoneme duration deterministic;
-        # this comparison changes only reading control and overall pace.
+        # The full stop gives the term a declarative ending.  sdp_ratio=0 removes
+        # duration randomness, while post-processing suppresses pitch variation.
         sr, audio = model.infer(
-            text=TERM,
+            text=synthesis_text,
             language=Languages.JP,
-            given_phone=phones if fix_reading else None,
-            given_tone=tones if fix_reading else None,
             line_split=False,
             length=candidate["length"],
             sdp_ratio=0.0,
             noise=0.20,
             noise_w=0.0,
+            style="Neutral",
+            style_weight=0.0,
             pitch_scale=1.0,
-            intonation_scale=1.0,
+            intonation_scale=candidate["intonation_scale"],
         )
 
         audio16 = to_int16(np.asarray(audio))
@@ -139,28 +122,29 @@ def main() -> None:
                 "label": candidate["label"],
                 "description": candidate["description"],
                 "src": f"./audio/sbv2-legal-terms/{filename}",
-                "phones": phones,
-                "tones": tones,
+                "phones": auto_phones,
+                "tones": auto_tones,
                 "length": candidate["length"],
+                "intonationScale": candidate["intonation_scale"],
             }
         )
         print(f"{candidate['label']}: {TERM} ({READING})")
-        print("  phones:", " ".join(phones))
-        print("  tones :", " ".join(map(str, tones)))
+        print("  phones:", " ".join(auto_phones))
+        print("  tones :", " ".join(map(str, auto_tones)))
 
     manifest = {
-        "version": 2,
+        "version": 3,
         "generatedAt": datetime.now(timezone.utc).isoformat(),
         "engine": "Style-Bert-VITS2",
         "model": MODEL_NAME,
         "modelRepo": MODEL_REPO,
         "modelLicense": "CC BY-SA 4.0 (JVNV corpus model)",
-        "stage": "single-term-rework",
+        "stage": "neutral-read-rework",
         "term": TERM,
         "reading": READING,
-        "rejectedVersion": 1,
-        "rejectedReason": "The hiragana-only model input produced a non-Japanese mora length: きげーん.",
-        "testPolicy": "Compare one rejected term only. The written kanji is retained as model input, duration prediction is deterministic, and no remaining legal term is generated until this term passes listening review.",
+        "rejectedVersions": [1, 2],
+        "rejectedReason": "Version 1 produced a non-Japanese mora length (きげーん); version 2 sounded surprised because the JVNV emotional model retained excessive intonation.",
+        "testPolicy": "Compare ordinary and flatter neutral readings of one term only. The written kanji and declarative punctuation are retained, duration is deterministic, and intonation is suppressed. No remaining legal term is generated until this term passes listening review.",
         "items": items,
     }
     (OUT / "manifest.json").write_text(

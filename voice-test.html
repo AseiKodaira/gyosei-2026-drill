@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#17365d">
-  <title>不確定期限 発音やり直し</title>
+  <title>不確定期限 普通読みテスト</title>
   <style>
     :root{--navy:#17365d;--bg:#f5f7fb;--card:#fff;--line:#e4e8ef;--ink:#172033;--muted:#667085;--green:#138a53;--red:#b42318}
     *{box-sizing:border-box}
@@ -27,12 +27,12 @@
 </head>
 <body>
 <main>
-  <div class="top"><a class="back" href="./index.html">← 学習アプリへ</a><span class="note">1語目を再検証</span></div>
+  <div class="top"><a class="back" href="./index.html">← 学習アプリへ</a><span class="note">普通読みを再検証</span></div>
   <section class="card">
-    <h1>「不確定期限」発音やり直し</h1>
-    <p class="lead">読みは「ふかくていきげん」です。「きげーん」と伸びず、日本語の拍で聞こえる候補があるかだけ確認します。</p>
-    <p class="rejected card">前回の6音声は不採用です。残り5語と4拍化には進みません。</p>
-    <p class="note">今回の候補は漢字の「不確定期限」を本文としてモデルに渡し、音の長さの揺らぎも止めて生成しています。</p>
+    <h1>「不確定期限」普通読みテスト</h1>
+    <p class="lead">読みは「ふかくていきげん」です。語尾を上げず、驚いた感じを付けず、普通に読めるかだけ確認します。</p>
+    <p class="rejected card">これまでの6音声と感情的な3候補は不採用です。残り5語と4拍化には進みません。</p>
+    <p class="note">Neutralに固定し、文末の「。」を含め、発音間隔の揺らぎを止めています。2本の違いは抑揚の弱さだけです。</p>
     <div class="status" id="status" role="status">読み込み中…</div><p class="status" id="result" role="status"></p><p class="status" id="storageStatus" role="status"></p>
   </section>
   <div id="candidates"></div>
@@ -40,7 +40,7 @@
 </main>
 <script>
 'use strict';
-const STORAGE_KEY='gyosei2026-sbv2-kigen-rework-v2';const status=document.getElementById('status');const heard=new Set();
+const STORAGE_KEY='gyosei2026-sbv2-kigen-neutral-v3';const status=document.getElementById('status');const heard=new Set();
 let active=null;let manifest=null;let judgments={};
 function stopAudio(){if(!active)return;const {audio,button}=active;active=null;audio.onended=null;audio.onerror=null;audio.pause();audio.currentTime=0;button.textContent='▶ 再生';button.setAttribute('aria-pressed','false');}
 function updateResult(){
@@ -62,14 +62,14 @@ async function play(i,button){
 async function load(){
   try{
     const response=await fetch('./audio/sbv2-legal-terms/manifest.json',{cache:'no-store'});if(!response.ok)throw new Error('manifest');const m=await response.json();
-    if(m.version!==2||m.stage!=='single-term-rework'||m.term!=='不確定期限'||m.reading!=='ふかくていきげん'||!Array.isArray(m.items)||m.items.length!==3||m.items.some(v=>!v.id||!v.label||!v.src))throw new Error('schema');manifest=m;
+    if(m.version!==3||m.stage!=='neutral-read-rework'||m.term!=='不確定期限'||m.reading!=='ふかくていきげん'||!Array.isArray(m.items)||m.items.length!==2||m.items.some(v=>!v.id||!v.label||!v.src))throw new Error('schema');manifest=m;
     try{const saved=JSON.parse(localStorage.getItem(STORAGE_KEY)||'null');if(saved&&saved.generatedAt===m.generatedAt&&saved.judgments)judgments=saved.judgments;}catch(e){document.getElementById('storageStatus').textContent='保存済み判定を読み込めませんでした。';}
     const root=document.getElementById('candidates');m.items.forEach((item,i)=>{
       const card=document.createElement('section');card.className='card candidate';card.innerHTML=`<div><div class="term"></div><div class="reading"></div></div><button data-play="${i}" aria-pressed="false">▶ 再生</button><fieldset class="judgment"><legend>最後まで聞いて判定</legend><button data-judge data-index="${i}" data-value="correct" aria-pressed="false" disabled>日本語として正しい</button><button data-judge data-index="${i}" data-value="wrong" aria-pressed="false" disabled>まだ不自然</button></fieldset><details><summary>生成条件</summary><p class="meta"></p></details>`;
-      card.querySelector('.term').textContent=item.label+'：'+m.term;card.querySelector('.reading').textContent=item.description;card.querySelector('.meta').textContent='読み：'+m.reading+' ／ 音素：'+item.phones.join(' ')+' ／ アクセント：'+item.tones.join(' ')+' ／ 長さ係数：'+item.length;
+      card.querySelector('.term').textContent=item.label+'：'+m.term;card.querySelector('.reading').textContent=item.description;card.querySelector('.meta').textContent='読み：'+m.reading+' ／ 音素：'+item.phones.join(' ')+' ／ アクセント：'+item.tones.join(' ')+' ／ 長さ係数：'+item.length+' ／ 抑揚：'+item.intonationScale;
       const playButton=card.querySelector('[data-play]');playButton.setAttribute('aria-label',item.label+'を再生・停止');playButton.onclick=()=>play(i,playButton);card.querySelectorAll('[data-judge]').forEach(button=>button.onclick=()=>{judgments[item.id]=button.dataset.value;save();updateResult();});root.appendChild(card);
     });
-    status.textContent='3候補を1つずつ再生できます。';updateResult();document.getElementById('engineMeta').textContent='エンジン：'+m.engine+' ／ モデル：'+m.model+' ／ 音声生成日時：'+m.generatedAt;
+    status.textContent='普通読み2本を1つずつ再生できます。';updateResult();document.getElementById('engineMeta').textContent='エンジン：'+m.engine+' ／ モデル：'+m.model+' ／ 音声生成日時：'+m.generatedAt;
   }catch(e){status.className='status error';status.textContent='再生成した候補はまだ公開されていません。しばらくして再読み込みしてください。';}
 }
 window.addEventListener('pagehide',stopAudio);document.addEventListener('visibilitychange',()=>{if(document.hidden)stopAudio();});load();

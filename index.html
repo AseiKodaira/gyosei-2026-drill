@@ -52,7 +52,7 @@ button{cursor:pointer}
   <div id="app">
     <header class="topbar">
       <div>
-        <div class="eyebrow">行政書士試験 2026 <span style="opacity:.55;font-weight:700">v1.0.16</span></div>
+        <div class="eyebrow">行政書士試験 2026 <span style="opacity:.55;font-weight:700">v1.0.17</span></div>
         <h1 id="pageTitle">ホーム</h1>
       </div>
       <button class="icon-btn" id="quickReviewBtn" aria-label="今日の復習">↻</button>
@@ -81,7 +81,7 @@ window.GYOSEI_DATA={"mocks":{"mock1":[{"id":"MOCK1-01","mock":"mock1","no":1,"fo
 'use strict';
 
 const DATA = window.GYOSEI_DATA || {mocks:{}, predicted30:[], mnemonics:[], propositions:[]};
-const APP_VERSION = '1.0.16';
+const APP_VERSION = '1.0.17';
 const STORAGE_KEY = 'gyosei2026_state_v1';
 const EXAM_DATE_DEFAULT = '2026-11-08';
 const INTERVALS = [1,3,7,14,30];
@@ -1010,7 +1010,7 @@ function renderSettings(){
     <div class="card settings-block"><h3>学習設定</h3><div class="filters"><div class="field"><label>1日の目標回答数</label><select id="dailyTarget">${[20,30,40,50,60].map(n=>`<option ${n===state.settings.dailyTarget?'selected':''}>${n}</option>`).join('')}</select></div><div class="field"><label>自動セット問題数</label><select id="newDaily">${[10,20,30,40,50].map(n=>`<option ${n===state.settings.newDaily?'selected':''}>${n}</option>`).join('')}</select></div></div><div class="field" style="margin-top:10px"><label>本試験日</label><input id="examDate" type="date" value="${esc(state.settings.examDate)}"></div><button class="btn full" id="saveSettings" style="margin-top:12px">設定を保存</button></div>
     <div class="card settings-block"><h3>データ</h3><p class="note">模試 ${mockQuestions.length}問＋予想 ${predicted.length}問＋命題 ${propositions.length.toLocaleString()}件＋口ずさみ ${mnemonics.length}本。</p><div class="btn-row"><button class="btn secondary" id="exportProgress">進捗を書き出す</button><label class="btn outline" for="importProgress" style="display:inline-flex;align-items:center">進捗を読み込む</label><input id="importProgress" type="file" accept="application/json" hidden></div></div>
     <div class="card settings-block"><h3>iPhoneにアプリとして追加</h3><p class="note">${isStandalone()?'現在ホーム画面アプリとして起動しています。':'HTTPSで公開したURLをSafariで開き、共有 →「ホーム画面に追加」でインストールできます。'} ${location.protocol==='file:'?'現在はファイルとして開いています。学習機能は動きますが、PWAインストールにはHTTPS公開が必要です。':''}</p><button class="btn secondary full" id="installBtn" ${deferredInstallPrompt?'':'disabled'}>インストールを実行</button></div>
-    <div class="card settings-block"><h3>Style-Bert-VITS2 普通読みテスト</h3><p class="note">これまでの音声は不採用です。「不確定期限」をNeutral固定・低い抑揚で普通に読んだ2本だけを比較します。残り5語と4拍化にはまだ進みません。</p><a class="btn secondary full" href="./voice-test.html" style="display:flex;align-items:center;justify-content:center;text-decoration:none;margin-top:10px">不確定期限の普通読みを試す</a></div>
+    <div class="card settings-block"><h3>端末標準音声 普通読みテスト</h3><p class="note">Style-Bert-VITS2のJVNV音声は不採用です。この端末に入っている日本語の標準音声で「不確定期限」を普通に読みます。残り5語と4拍化にはまだ進みません。</p><a class="btn secondary full" href="./voice-test.html" style="display:flex;align-items:center;justify-content:center;text-decoration:none;margin-top:10px">端末の日本語音声で試す</a></div>
     <div class="card settings-block"><h3>プライバシー</h3><p class="note">進捗・弱点・模試答案はこの端末のブラウザ内（localStorage）だけに保存します。アプリ本体から外部サーバーへ送信しません。根拠URLをタップした場合だけ外部サイトを開きます。</p></div>
     <div class="card settings-block danger-zone"><h3>リセット</h3><p class="note">すべての進捗・模試結果を消去します。</p><button class="btn danger full" id="resetProgress">全データをリセット</button></div>
     <p class="note" style="text-align:center">行政書士2026 Drill v${APP_VERSION}</p>`;
@@ -1035,7 +1035,7 @@ function closeModal(){modalRoot.innerHTML='';}
 
 window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredInstallPrompt=e;if(route==='settings')renderSettings();});
 if('serviceWorker' in navigator && location.protocol.startsWith('http')){
-  navigator.serviceWorker.register('./sw.js?v=20',{updateViaCache:'none'}).then(reg=>{
+  navigator.serviceWorker.register('./sw.js?v=21',{updateViaCache:'none'}).then(reg=>{
     reg.update().catch(()=>{});
   }).catch(console.warn);
   let reloading=false;

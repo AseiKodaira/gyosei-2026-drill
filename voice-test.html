@@ -4,75 +4,65 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#17365d">
-  <title>不確定期限 普通読みテスト</title>
+  <title>端末標準音声 普通読みテスト</title>
   <style>
     :root{--navy:#17365d;--bg:#f5f7fb;--card:#fff;--line:#e4e8ef;--ink:#172033;--muted:#667085;--green:#138a53;--red:#b42318}
-    *{box-sizing:border-box}
-    body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Yu Gothic UI","Yu Gothic",Meiryo,sans-serif;padding-bottom:40px}
+    *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Yu Gothic UI","Yu Gothic",Meiryo,sans-serif;padding-bottom:40px}
     main{max-width:720px;margin:0 auto;padding:18px 14px}.top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}
-    h1{font-size:22px;margin:0}.back{color:var(--navy);font-weight:800;text-decoration:none}
-    .card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:16px;margin-bottom:12px}
-    .lead{font-size:14px;line-height:1.7}.note,.meta,.status{font-size:12px;line-height:1.7;color:var(--muted)}
-    .rejected{border-color:#f0b6b2;background:#fff8f7;color:var(--red);font-weight:800}
-    .candidate{display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center}.term{font-size:21px;font-weight:900;color:var(--navy)}
-    .reading{font-size:13px;color:var(--muted);margin-top:4px}
-    button{border:0;border-radius:14px;background:var(--navy);color:#fff;font:inherit;font-weight:850;min-height:46px;padding:10px 16px}
-    button:disabled{opacity:.45}.error{color:var(--red)}.ready{color:var(--green);font-weight:800}
-    .judgment{grid-column:1/-1;border:0;padding:0;margin:0;display:flex;gap:8px;flex-wrap:wrap}
-    .judgment legend{font-size:13px;margin-bottom:8px}.judgment button{background:#eef3f8;color:var(--navy);font-size:13px}
-    .judgment button[aria-pressed="true"]{background:var(--navy);color:#fff}details{grid-column:1/-1;font-size:12px;overflow-wrap:anywhere}
-    button:focus-visible,a:focus-visible{outline:3px solid #e89b00;outline-offset:3px}
-    @media(max-width:360px){.candidate{grid-template-columns:1fr}.candidate>button{justify-self:start}}
+    h1{font-size:22px;margin:0}.back{color:var(--navy);font-weight:800;text-decoration:none}.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:16px;margin-bottom:12px}
+    .lead{font-size:14px;line-height:1.7}.note,.status{font-size:12px;line-height:1.7;color:var(--muted)}.rejected{border-color:#f0b6b2;background:#fff8f7;color:var(--red);font-weight:800}
+    .term{font-size:26px;font-weight:900;color:var(--navy);margin-bottom:5px}.reading{font-size:15px;color:var(--muted);margin-bottom:14px}
+    label{display:block;font-size:13px;font-weight:800;margin-bottom:6px}select{width:100%;min-height:46px;border:1px solid var(--line);border-radius:12px;background:#fff;padding:8px 10px;font:inherit;margin-bottom:12px}
+    button{border:0;border-radius:14px;background:var(--navy);color:#fff;font:inherit;font-weight:850;min-height:46px;padding:10px 16px}button:disabled{opacity:.45}
+    .actions{display:flex;gap:8px;flex-wrap:wrap}.judge{background:#eef3f8;color:var(--navy)}.judge[aria-pressed="true"]{background:var(--navy);color:#fff}.ready{color:var(--green);font-weight:800}.error{color:var(--red)}
+    button:focus-visible,a:focus-visible,select:focus-visible{outline:3px solid #e89b00;outline-offset:3px}
   </style>
 </head>
 <body>
 <main>
   <div class="top"><a class="back" href="./index.html">← 学習アプリへ</a><span class="note">普通読みを再検証</span></div>
   <section class="card">
-    <h1>「不確定期限」普通読みテスト</h1>
-    <p class="lead">読みは「ふかくていきげん」です。語尾を上げず、驚いた感じを付けず、普通に読めるかだけ確認します。</p>
-    <p class="rejected card">これまでの6音声と感情的な3候補は不採用です。残り5語と4拍化には進みません。</p>
-    <p class="note">Neutralに固定し、文末の「。」を含め、発音間隔の揺らぎを止めています。2本の違いは抑揚の弱さだけです。</p>
-    <div class="status" id="status" role="status">読み込み中…</div><p class="status" id="result" role="status"></p><p class="status" id="storageStatus" role="status"></p>
+    <h1>端末標準音声で普通読み</h1>
+    <p class="lead">この端末に入っている日本語の標準読み上げ音声で「ふかくていきげん」と読みます。</p>
+    <p class="rejected card">Style-Bert-VITS2のJVNV音声は、感情を除去できなかったため不採用です。</p>
+    <p class="note">音声ファイルは生成しません。選んだ音声は端末内で読み上げます。話速0.9、ピッチ1.0、感情指定なしです。</p>
   </section>
-  <div id="candidates"></div>
-  <section class="card"><div class="meta" id="engineMeta"></div></section>
+  <section class="card">
+    <div class="term">不確定期限</div><div class="reading">ふかくていきげん</div>
+    <label for="voiceSelect">この端末の日本語音声</label><select id="voiceSelect" disabled><option>日本語音声を読み込み中…</option></select>
+    <div class="actions"><button id="play" disabled>▶ 普通に読む</button><button id="stop" class="judge" disabled>■ 停止</button></div>
+    <p class="status" id="status" role="status">日本語音声を確認しています…</p>
+    <div class="actions"><button class="judge" data-value="correct" aria-pressed="false" disabled>普通に聞こえる</button><button class="judge" data-value="wrong" aria-pressed="false" disabled>まだ不自然</button></div>
+    <p class="status" id="result" role="status"></p>
+  </section>
 </main>
 <script>
 'use strict';
-const STORAGE_KEY='gyosei2026-sbv2-kigen-neutral-v3';const status=document.getElementById('status');const heard=new Set();
-let active=null;let manifest=null;let judgments={};
-function stopAudio(){if(!active)return;const {audio,button}=active;active=null;audio.onended=null;audio.onerror=null;audio.pause();audio.currentTime=0;button.textContent='▶ 再生';button.setAttribute('aria-pressed','false');}
-function updateResult(){
-  const correct=manifest.items.filter(item=>judgments[item.id]==='correct');const wrong=manifest.items.filter(item=>judgments[item.id]==='wrong');
-  document.querySelectorAll('[data-judge]').forEach(button=>{const i=Number(button.dataset.index);const item=manifest.items[i];button.disabled=!heard.has(i)&&!judgments[item.id];button.setAttribute('aria-pressed',String(button.dataset.value===judgments[item.id]));});
-  const result=document.getElementById('result');
-  if(correct.length){result.className='status ready';result.textContent='正しい候補：'+correct.map(v=>v.label).join('、')+'。この1語だけ通過候補です。';}
-  else{result.className='status';result.textContent=`正しい候補 0件・まだ不自然 ${wrong.length}件・未判定 ${manifest.items.length-wrong.length}件。`;}
+const STORAGE_KEY='gyosei2026-device-voice-kigen-v1';const select=document.getElementById('voiceSelect');const playButton=document.getElementById('play');const stopButton=document.getElementById('stop');const status=document.getElementById('status');
+let voices=[];let utterance=null;let heard=false;let judgment='';
+function saved(){try{return JSON.parse(localStorage.getItem(STORAGE_KEY)||'null')}catch(e){return null}}
+function save(){try{localStorage.setItem(STORAGE_KEY,JSON.stringify({voiceURI:select.value,judgment}))}catch(e){}}
+function updateJudgment(){document.querySelectorAll('[data-value]').forEach(button=>{button.disabled=!heard&&!judgment;button.setAttribute('aria-pressed',String(button.dataset.value===judgment));});const result=document.getElementById('result');result.className=judgment==='correct'?'status ready':'status';result.textContent=judgment==='correct'?'この端末音声は普通読みの候補です。':judgment==='wrong'?'この端末音声も不採用です。':'';}
+function stop(){if(!('speechSynthesis'in window))return;speechSynthesis.cancel();utterance=null;playButton.textContent='▶ 普通に読む';playButton.disabled=voices.length===0;stopButton.disabled=true;select.disabled=voices.length===0;}
+function loadVoices(){
+  if(!('speechSynthesis'in window)){status.className='status error';status.textContent='このブラウザは端末音声の読み上げに対応していません。';return;}
+  if(utterance)return;
+  const next=speechSynthesis.getVoices().filter(v=>/^ja([-_]|$)/i.test(v.lang));if(!next.length)return;voices=next;const previous=saved();
+  select.replaceChildren(...voices.map(v=>{const option=document.createElement('option');option.value=v.voiceURI;option.textContent=v.name+'（'+v.lang+(v.localService?'・端末内':'')+'）';return option;}));
+  const preferred=voices.find(v=>previous&&v.voiceURI===previous.voiceURI)||voices.find(v=>v.default)||voices.find(v=>v.localService)||voices[0];select.value=preferred.voiceURI;select.disabled=false;playButton.disabled=false;judgment=previous&&previous.voiceURI===preferred.voiceURI?previous.judgment||'':'';updateJudgment();
+  status.className='status';status.textContent='使用音声：'+preferred.name+'。再生して普通の発音か確認してください。';
 }
-function save(){try{localStorage.setItem(STORAGE_KEY,JSON.stringify({generatedAt:manifest.generatedAt,judgments}));document.getElementById('storageStatus').textContent='判定をこの端末に保存しました。';}catch(e){document.getElementById('storageStatus').textContent='判定を端末へ保存できませんでした。';}}
-async function play(i,button){
-  const same=active&&active.button===button;stopAudio();if(same){status.textContent='再生を停止しました。';return;}
-  const item=manifest.items[i];const url=new URL(item.src,location.href);url.searchParams.set('v',manifest.generatedAt);const audio=new Audio(url.href);active={audio,button};
-  button.textContent='■ 停止';button.setAttribute('aria-pressed','true');status.classList.remove('error');status.textContent=item.label+'を再生中…';
-  const fail=()=>{if(!active||active.audio!==audio)return;stopAudio();status.classList.add('error');status.textContent=item.label+'を再生できませんでした。再読み込みしてください。';};
-  audio.onended=()=>{if(!active||active.audio!==audio)return;stopAudio();heard.add(i);status.textContent=item.label+'の再生が終わりました。発音を判定してください。';updateResult();};audio.onerror=fail;
-  try{await audio.play();}catch(e){fail();}
+function speak(){
+  stop();const voice=voices.find(v=>v.voiceURI===select.value);if(!voice){status.className='status error';status.textContent='日本語音声を選べませんでした。';return;}
+  utterance=new SpeechSynthesisUtterance('ふかくていきげん。');utterance.lang='ja-JP';utterance.voice=voice;utterance.rate=0.9;utterance.pitch=1.0;utterance.volume=1.0;
+  utterance.onstart=()=>{playButton.textContent='再生中…';playButton.disabled=true;stopButton.disabled=false;select.disabled=true;status.className='status';status.textContent='普通読みを再生中…';};
+  utterance.onend=()=>{utterance=null;heard=true;playButton.textContent='▶ もう一度読む';playButton.disabled=false;stopButton.disabled=true;select.disabled=false;status.textContent='再生が終わりました。普通に聞こえたか判定してください。';updateJudgment();};
+  utterance.onerror=event=>{stop();playButton.disabled=false;status.className='status error';status.textContent=event.error==='canceled'?'再生を停止しました。':'読み上げに失敗しました。別の日本語音声を選んでください。';};speechSynthesis.speak(utterance);
 }
-async function load(){
-  try{
-    const response=await fetch('./audio/sbv2-legal-terms/manifest.json',{cache:'no-store'});if(!response.ok)throw new Error('manifest');const m=await response.json();
-    if(m.version!==3||m.stage!=='neutral-read-rework'||m.term!=='不確定期限'||m.reading!=='ふかくていきげん'||!Array.isArray(m.items)||m.items.length!==2||m.items.some(v=>!v.id||!v.label||!v.src))throw new Error('schema');manifest=m;
-    try{const saved=JSON.parse(localStorage.getItem(STORAGE_KEY)||'null');if(saved&&saved.generatedAt===m.generatedAt&&saved.judgments)judgments=saved.judgments;}catch(e){document.getElementById('storageStatus').textContent='保存済み判定を読み込めませんでした。';}
-    const root=document.getElementById('candidates');m.items.forEach((item,i)=>{
-      const card=document.createElement('section');card.className='card candidate';card.innerHTML=`<div><div class="term"></div><div class="reading"></div></div><button data-play="${i}" aria-pressed="false">▶ 再生</button><fieldset class="judgment"><legend>最後まで聞いて判定</legend><button data-judge data-index="${i}" data-value="correct" aria-pressed="false" disabled>日本語として正しい</button><button data-judge data-index="${i}" data-value="wrong" aria-pressed="false" disabled>まだ不自然</button></fieldset><details><summary>生成条件</summary><p class="meta"></p></details>`;
-      card.querySelector('.term').textContent=item.label+'：'+m.term;card.querySelector('.reading').textContent=item.description;card.querySelector('.meta').textContent='読み：'+m.reading+' ／ 音素：'+item.phones.join(' ')+' ／ アクセント：'+item.tones.join(' ')+' ／ 長さ係数：'+item.length+' ／ 抑揚：'+item.intonationScale;
-      const playButton=card.querySelector('[data-play]');playButton.setAttribute('aria-label',item.label+'を再生・停止');playButton.onclick=()=>play(i,playButton);card.querySelectorAll('[data-judge]').forEach(button=>button.onclick=()=>{judgments[item.id]=button.dataset.value;save();updateResult();});root.appendChild(card);
-    });
-    status.textContent='普通読み2本を1つずつ再生できます。';updateResult();document.getElementById('engineMeta').textContent='エンジン：'+m.engine+' ／ モデル：'+m.model+' ／ 音声生成日時：'+m.generatedAt;
-  }catch(e){status.className='status error';status.textContent='再生成した候補はまだ公開されていません。しばらくして再読み込みしてください。';}
-}
-window.addEventListener('pagehide',stopAudio);document.addEventListener('visibilitychange',()=>{if(document.hidden)stopAudio();});load();
+select.onchange=()=>{stop();heard=false;judgment='';save();updateJudgment();const voice=voices.find(v=>v.voiceURI===select.value);status.className='status';status.textContent='使用音声：'+voice.name+'。再生して普通の発音か確認してください。';};
+playButton.onclick=speak;stopButton.onclick=stop;document.querySelectorAll('[data-value]').forEach(button=>button.onclick=()=>{judgment=button.dataset.value;save();updateJudgment();});
+if('speechSynthesis'in window){speechSynthesis.onvoiceschanged=loadVoices;loadVoices();setTimeout(loadVoices,250);setTimeout(loadVoices,1000);}else loadVoices();
+window.addEventListener('pagehide',stop);
 </script>
 </body>
 </html>

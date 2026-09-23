@@ -51,6 +51,20 @@ def prepare_bert() -> None:
     bert_models.load_tokenizer(Languages.JP, repo_id)
 
 
+def to_int16(audio: np.ndarray) -> np.ndarray:
+    data = np.asarray(audio)
+    if data.dtype == np.int16:
+        return data
+    if np.issubdtype(data.dtype, np.floating):
+        peak = float(np.max(np.abs(data))) if data.size else 0.0
+        if peak > 0:
+            data = data / peak
+        return np.clip(data * 32767.0, -32768, 32767).astype(np.int16)
+    if data.dtype == np.int32:
+        return (data / 65536).astype(np.int16)
+    return np.clip(data, -32768, 32767).astype(np.int16)
+
+
 def main() -> None:
     prepare_bert()
     model_path, config_path, style_path = download_assets()
@@ -83,7 +97,7 @@ def main() -> None:
             intonation_scale=1.0,
         )
 
-        audio16 = TTSModel.convert_to_16_bit_wav(np.asarray(audio))
+        audio16 = to_int16(np.asarray(audio))
         filename = f"term_{i:02d}.wav"
         wav_write(OUT / filename, sr, audio16)
 

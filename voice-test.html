@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#17365d">
-  <title>無料日本語音声 比較試聴</title>
+  <title>Edge Neural 日本語発音テスト</title>
   <style>
     :root{--navy:#17365d;--bg:#f5f7fb;--card:#fff;--line:#e4e8ef;--ink:#172033;--muted:#667085;--green:#138a53;--orange:#b54708}
     *{box-sizing:border-box}
@@ -37,17 +37,17 @@
   </div>
 
   <div class="card">
-    <h1>AivisSpeech / VOICEVOX 比較</h1>
-    <p class="lead">Kokoroは発音崩れが大きかったため不採用。次は無料の2方式を、同じ法律短文・同じ読み指定で比較します。学習本体にはまだ適用しません。</p>
+    <h1>Edge Neural 日本語2声テスト</h1>
+    <p class="lead">Kokoro・AivisSpeech・VOICEVOXはいずれも法律用語の発音が不十分だったため不採用。次はMicrosoft Edgeの日本語Neural音声を2声だけ、同じ法律短文・同じ読み指定で比較します。学習本体にはまだ適用しません。</p>
     <div class="phrase" id="phrase">読み込み中…</div>
     <div class="reading" id="reading"></div>
-    <p class="note">「不確定期限」「履行請求」「履行遅滞」「物上代位」「牽連性」「瑕疵」は、エンジン任せにせず読みをひらがなで固定して生成します。</p>
+    <p class="note">「不確定期限」「履行請求」「履行遅滞」「物上代位」「牽連性」「瑕疵」は、漢字の自動読みに任せず、ひらがな読みに固定して生成します。まず発音だけを判定します。</p>
   </div>
 
   <div id="voices"></div>
 
   <div class="card">
-    <div class="note">評価ポイント：①法律用語を正しく読むか ②日本語として人っぽいか ③語尾が不自然に伸びないか ④暗記用のリズムを後から乗せられそうか。</div>
+    <div class="note">今回は①法律用語を正しく読むかを最優先。発音が合格してから、人っぽさ・4拍リズムへ進みます。</div>
     <div class="status" id="status"></div>
   </div>
 </main>
@@ -81,7 +81,7 @@ async function playVoice(src,button){
 async function load(){
   const status=document.getElementById('status');
   try{
-    const r=await fetch('./audio/voice-comparison/manifest.json?v='+Date.now(),{cache:'no-store'});
+    const r=await fetch('./audio/edge-samples/manifest.json?v='+Date.now(),{cache:'no-store'});
     if(!r.ok)throw new Error('manifest');
     const m=await r.json();
     document.getElementById('phrase').textContent=m.displayText||'';
@@ -90,10 +90,10 @@ async function load(){
     document.getElementById('voices').innerHTML=items.map((v,i)=>`
       <div class="card voice">
         <div>
-          <h2>${v.engine||'音声'+(i+1)}</h2>
-          <div class="meta">${v.speaker||'生成待ち'}${v.style?' ・ '+v.style:''}</div>
-          <div class="meta">${v.credit||''}</div>
-          <div class="tag">${v.rhythm||'標準'}</div>
+          <h2>${v.voice||'音声'+(i+1)}</h2>
+          <div class="meta">${v.engine||''}</div>
+          <div class="meta">${v.gender||''}</div>
+          <div class="tag">${v.note||'発音確認用'}</div>
         </div>
         <button data-play="${i}" data-src="${v.src||''}" ${v.src?'':'disabled'}>${v.src?'▶ 試聴':'生成待ち'}</button>
       </div>
@@ -103,7 +103,7 @@ async function load(){
     });
     const ready=items.filter(v=>v.src).length;
     status.innerHTML=ready===2
-      ? '<span class="ready">AivisSpeech / VOICEVOX の2音声とも生成済み</span>'
+      ? '<span class="ready">Edge Neural 日本語2声とも生成済み</span>'
       : '<span class="warn">現在 '+ready+'/2。GitHub Actionsで音声生成中です。</span>';
   }catch(e){
     status.textContent='比較音声データを読み込めませんでした。';

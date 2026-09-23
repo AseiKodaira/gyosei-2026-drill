@@ -1,111 +1,45 @@
 {
-  "version": 3,
-  "generatedAt": "2026-09-23T06:10:07.676741+00:00",
+  "version": 4,
+  "generatedAt": "2026-09-23T02:56:30.532561+00:00",
+  "updatedAt": "2026-09-23",
   "engine": "Style-Bert-VITS2",
   "model": "jvnv-F1-jp",
   "modelRepo": "litagin/style_bert_vits2_jvnv",
   "modelLicense": "CC BY-SA 4.0 (JVNV corpus model)",
-  "stage": "neutral-read-rework",
-  "term": "不確定期限",
-  "reading": "ふかくていきげん",
-  "rejectedVersions": [
-    1,
-    2
-  ],
-  "rejectedReason": "Version 1 produced a non-Japanese mora length (きげーん); version 2 sounded surprised because the JVNV emotional model retained excessive intonation.",
-  "testPolicy": "Compare ordinary and flatter neutral readings of one term only. The written kanji and declarative punctuation are retained, duration is deterministic, and intonation is suppressed. No remaining legal term is generated until this term passes listening review.",
+  "status": "rejected",
+  "active": false,
+  "rejectedReason": "Listening review rejected the generated voice because emotional intonation remained. These files are retained only as the six-term generation archive.",
+  "replacement": "voice-test.html uses the device Japanese speechSynthesis voice at rate 1.0 and pitch 1.0.",
   "items": [
     {
-      "id": "neutral-ordinary",
-      "label": "普通読み",
-      "description": "Neutral固定・抑揚35%・標準速度",
-      "src": "./audio/sbv2-legal-terms/term_01_neutral-ordinary.wav",
-      "phones": [
-        "_",
-        "f",
-        "u",
-        "k",
-        "a",
-        "k",
-        "u",
-        "t",
-        "e",
-        "e",
-        "k",
-        "i",
-        "g",
-        "e",
-        "N",
-        ".",
-        "_"
-      ],
-      "tones": [
-        0,
-        0,
-        0,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        0,
-        0,
-        0,
-        0,
-        0
-      ],
-      "length": 0.9,
-      "intonationScale": 0.35
+      "term": "不確定期限",
+      "reading": "ふかくていきげん",
+      "src": "./audio/sbv2-legal-terms/term_01.wav"
     },
     {
-      "id": "neutral-flatter",
-      "label": "さらに平坦",
-      "description": "Neutral固定・抑揚15%・標準速度",
-      "src": "./audio/sbv2-legal-terms/term_01_neutral-flatter.wav",
-      "phones": [
-        "_",
-        "f",
-        "u",
-        "k",
-        "a",
-        "k",
-        "u",
-        "t",
-        "e",
-        "e",
-        "k",
-        "i",
-        "g",
-        "e",
-        "N",
-        ".",
-        "_"
-      ],
-      "tones": [
-        0,
-        0,
-        0,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        0,
-        0,
-        0,
-        0,
-        0
-      ],
-      "length": 0.9,
-      "intonationScale": 0.15
+      "term": "履行請求",
+      "reading": "りこうせいきゅう",
+      "src": "./audio/sbv2-legal-terms/term_02.wav"
+    },
+    {
+      "term": "履行遅滞",
+      "reading": "りこうちたい",
+      "src": "./audio/sbv2-legal-terms/term_03.wav"
+    },
+    {
+      "term": "物上代位",
+      "reading": "ぶつじょうだいい",
+      "src": "./audio/sbv2-legal-terms/term_04.wav"
+    },
+    {
+      "term": "牽連性",
+      "reading": "けんれんせい",
+      "src": "./audio/sbv2-legal-terms/term_05.wav"
+    },
+    {
+      "term": "瑕疵",
+      "reading": "かし",
+      "src": "./audio/sbv2-legal-terms/term_06.wav"
     }
   ]
 }

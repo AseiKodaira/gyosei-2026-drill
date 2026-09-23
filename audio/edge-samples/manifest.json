@@ -1,23 +1,23 @@
 {
   "version": 1,
-  "generatedAt": null,
+  "generatedAt": "2026-09-23T02:36:56.007070+00:00",
   "displayText": "不確定期限、履行請求か知った時。早い方から履行遅滞。物上代位、牽連性、瑕疵。",
   "spokenText": "ふかくていきげん、りこうせいきゅうか しったとき。はやいほうから りこうちたい。ぶつじょうだいい、けんれんせい、かし。",
   "readingPolicy": "法律用語はひらがなで読みを固定して試聴。全件実装前の発音確認専用。",
   "items": [
     {
       "engine": "Microsoft Edge Neural TTS via edge-tts",
-      "voice": "生成待ち",
-      "gender": "",
-      "src": null,
-      "note": "APIキーなし・オンライン音声"
+      "voice": "ja-JP-NanamiNeural",
+      "gender": "Female",
+      "src": "./audio/edge-samples/edge_1.mp3",
+      "note": "API keyなし・オンライン音声"
     },
     {
       "engine": "Microsoft Edge Neural TTS via edge-tts",
-      "voice": "生成待ち",
-      "gender": "",
-      "src": null,
-      "note": "APIキーなし・オンライン音声"
+      "voice": "ja-JP-KeitaNeural",
+      "gender": "Male",
+      "src": "./audio/edge-samples/edge_2.mp3",
+      "note": "API keyなし・オンライン音声"
     }
   ]
 }

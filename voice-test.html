@@ -23,9 +23,9 @@
   <div class="top"><a class="back" href="./index.html">← 学習アプリへ</a><span class="note">普通読みを再検証</span></div>
   <section class="card">
     <h1>端末標準音声で普通読み</h1>
-    <p class="lead">この端末に入っている日本語の標準読み上げ音声へ、漢字の「不確定期限。」を渡して読みます。</p>
+    <p class="lead">先頭の「不」だけが浮かないよう、端末音声へ「ふかくてい期限。」を一続きで渡して読みます。</p>
     <p class="rejected card">Style-Bert-VITS2のJVNV音声は、感情を除去できなかったため不採用です。</p>
-    <p class="note">平仮名だけの入力は撤回しました。端末辞書が法律用語として解析できるよう、漢字表記を使います。話速0.9、ピッチ1.0、感情指定なしです。</p>
+    <p class="note">先頭側は読みでつなぎ、後半の「期限」は漢字のまま残してアクセントを使います。話速0.9、ピッチ1.0、感情指定なしです。</p>
   </section>
   <section class="card">
     <div class="term">不確定期限</div><div class="reading">ふかくていきげん</div>
@@ -38,7 +38,7 @@
 </main>
 <script>
 'use strict';
-const STORAGE_KEY='gyosei2026-device-voice-kigen-v2';const select=document.getElementById('voiceSelect');const playButton=document.getElementById('play');const stopButton=document.getElementById('stop');const status=document.getElementById('status');
+const STORAGE_KEY='gyosei2026-device-voice-kigen-v3';const select=document.getElementById('voiceSelect');const playButton=document.getElementById('play');const stopButton=document.getElementById('stop');const status=document.getElementById('status');
 let voices=[];let utterance=null;let heard=false;let judgment='';
 function saved(){try{return JSON.parse(localStorage.getItem(STORAGE_KEY)||'null')}catch(e){return null}}
 function save(){try{localStorage.setItem(STORAGE_KEY,JSON.stringify({voiceURI:select.value,judgment}))}catch(e){}}
@@ -54,7 +54,7 @@ function loadVoices(){
 }
 function speak(){
   stop();const voice=voices.find(v=>v.voiceURI===select.value);if(!voice){status.className='status error';status.textContent='日本語音声を選べませんでした。';return;}
-  utterance=new SpeechSynthesisUtterance('不確定期限。');utterance.lang='ja-JP';utterance.voice=voice;utterance.rate=0.9;utterance.pitch=1.0;utterance.volume=1.0;
+  utterance=new SpeechSynthesisUtterance('ふかくてい期限。');utterance.lang='ja-JP';utterance.voice=voice;utterance.rate=0.9;utterance.pitch=1.0;utterance.volume=1.0;
   utterance.onstart=()=>{playButton.textContent='再生中…';playButton.disabled=true;stopButton.disabled=false;select.disabled=true;status.className='status';status.textContent='普通読みを再生中…';};
   utterance.onend=()=>{utterance=null;heard=true;playButton.textContent='▶ もう一度読む';playButton.disabled=false;stopButton.disabled=true;select.disabled=false;status.textContent='再生が終わりました。普通に聞こえたか判定してください。';updateJudgment();};
   utterance.onerror=event=>{stop();playButton.disabled=false;status.className='status error';status.textContent=event.error==='canceled'?'再生を停止しました。':'読み上げに失敗しました。別の日本語音声を選んでください。';};speechSynthesis.speak(utterance);

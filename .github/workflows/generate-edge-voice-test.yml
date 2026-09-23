@@ -1,0 +1,51 @@
+name: Generate Edge neural Japanese samples
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/generate-edge-voice-test.yml"
+      - "scripts/generate-edge-voice-test.py"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: generate-edge-neural-japanese-samples
+  cancel-in-progress: false
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install edge-tts
+        run: python -m pip install --upgrade edge-tts
+
+      - name: Generate two Japanese neural samples
+        run: python scripts/generate-edge-voice-test.py
+
+      - name: Commit samples
+        run: |
+          if git diff --quiet -- audio/edge-samples && [ -z "$(git status --porcelain --untracked-files=all audio/edge-samples)" ]; then
+            echo "No sample changes."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add audio/edge-samples
+          git commit -m "chore: generate Edge neural Japanese samples"
+          git pull --rebase origin main
+          git push

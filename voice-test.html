@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#17365d">
-  <title>Style-Bert-VITS2 法律用語 発音テスト</title>
+  <title>Style-Bert-VITS2 6語発音ゲート</title>
   <style>
     :root{--navy:#17365d;--bg:#f5f7fb;--card:#fff;--line:#e4e8ef;--ink:#172033;--muted:#667085;--green:#138a53;--red:#b42318}
     *{box-sizing:border-box}
@@ -24,6 +24,15 @@
     .note{font-size:12px;line-height:1.7;color:var(--muted)}
     .ready{color:var(--green);font-weight:800}
     .status{font-size:12px;margin-top:8px}
+    .judgment{grid-column:1/-1;border:0;padding:0;margin:0;display:flex;gap:8px;flex-wrap:wrap}
+    .judgment legend{font-size:13px;margin-bottom:8px}
+    .judgment button{background:#eef3f8;color:var(--navy);font-size:13px}
+    .judgment button[aria-pressed="true"]{background:var(--navy);color:#fff}
+    button:disabled{opacity:.45}
+    button:focus-visible,a:focus-visible{outline:3px solid #e89b00;outline-offset:3px}
+    .error{color:var(--red)}
+    details{grid-column:1/-1;font-size:12px;overflow-wrap:anywhere}
+    @media(max-width:360px){.term-card{grid-template-columns:1fr}.term-card>button{justify-self:start}}
   </style>
 </head>
 <body>
@@ -34,75 +43,156 @@
   </div>
 
   <div class="card">
-    <h1>Style-Bert-VITS2 法律用語6語テスト</h1>
+    <h1>Style-Bert-VITS2 6語発音ゲート</h1>
     <p class="lead">文章にも4拍にもまだしません。まず法律用語6語を単語単体で正しく発音できるかだけ確認します。</p>
-    <p class="note">今回は読みをひらがなで固定したうえで、さらに <strong>音素列（given_phone）とアクセント列（given_tone）を明示</strong>して生成しています。単なる「かな入力」より強く発音を固定しています。</p>
-    <div class="status" id="status">読み込み中…</div>
+    <p class="note">1語ずつ最後まで再生し、読み・長音・音の切れ方・アクセントを聞いて「OK」または「要修正」を選んでください。6語すべてがOKになるまで発音確認を続けます。判定はこの端末に保存します。</p>
+    <div class="status" id="status" role="status">読み込み中…</div>
+    <p class="status" id="gate" role="status"></p>
+    <p class="note" id="storageStatus" role="status"></p>
   </div>
 
   <div id="terms"></div>
 
   <div class="card">
     <div class="note" id="engineMeta"></div>
+    <p class="note">生成時の読み・音素・アクセント指定は各語の詳細で確認できます。指定どおりに聞こえるかは、試聴して判定してください。</p>
   </div>
 </main>
 
 <script>
-let currentAudio=null;
+'use strict';
+const STORAGE_KEY='gyosei2026-sbv2-pronunciation-v1';
+let active=null;
+let items=[];
+let judgments={};
+let revision='';
+let audioVersion='';
+const heard=new Set();
+const status=document.getElementById('status');
 
 function stopAudio(){
-  if(currentAudio){
-    try{currentAudio.pause();currentAudio.currentTime=0;}catch(e){}
-    currentAudio=null;
+  if(!active)return;
+  const {audio,button}=active;
+  active=null;
+  audio.onended=null;
+  audio.onerror=null;
+  audio.pause();
+  audio.currentTime=0;
+  button.textContent='▶ 再生';
+  button.setAttribute('aria-pressed','false');
+}
+
+function updateGate(){
+  let ok=0,fix=0;
+  items.forEach((item,i)=>{
+    const value=judgments[item.term];
+    if(value==='ok')ok++;
+    if(value==='fix')fix++;
+    document.querySelectorAll(`[data-judge="${i}"]`).forEach(button=>{
+      button.disabled=!heard.has(i)&&!value;
+      button.setAttribute('aria-pressed',String(button.dataset.value===value));
+    });
+  });
+  document.getElementById('gate').textContent=
+    `OK ${ok}/6語・要修正 ${fix}語・未判定 ${6-ok-fix}語。`+
+    (ok===6?'6語の発音ゲートを通過しました。文章化・4拍化は次の段階です。':'まず6語の発音を確認してください。');
+}
+
+function saveJudgments(){
+  try{
+    localStorage.setItem(STORAGE_KEY,JSON.stringify({revision,judgments}));
+    document.getElementById('storageStatus').textContent='判定をこの端末に保存しました。';
+  }catch(e){
+    document.getElementById('storageStatus').textContent='この端末に保存できません。判定はページを閉じるまで有効です。';
   }
 }
 
-async function play(src,button){
+async function play(i,button){
+  const same=active&&active.button===button;
   stopAudio();
-  document.querySelectorAll('button[data-play]').forEach(b=>b.textContent='▶ 再生');
-  try{
-    const a=new Audio(src+'?v='+Date.now());
-    currentAudio=a;
-    button.textContent='■ 再生中';
-    a.onended=()=>{button.textContent='▶ 再生';if(currentAudio===a)currentAudio=null;};
-    a.onerror=()=>{button.textContent='▶ 再生';};
-    await a.play();
-  }catch(e){
-    button.textContent='▶ 再生';
-  }
+  if(same){status.textContent='再生を停止しました。';return;}
+  const item=items[i];
+  const url=new URL(item.src,location.href);
+  url.searchParams.set('v',audioVersion);
+  const audio=new Audio(url.href);
+  active={audio,button};
+  button.textContent='■ 停止';
+  button.setAttribute('aria-pressed','true');
+  status.classList.remove('error');
+  status.textContent=item.term+'を再生中…';
+  const fail=()=>{
+    if(!active||active.audio!==audio)return;
+    stopAudio();
+    status.classList.add('error');
+    status.textContent=item.term+'の音声を再生できませんでした。通信を確認して、もう一度再生してください。';
+  };
+  audio.onended=()=>{
+    if(!active||active.audio!==audio)return;
+    stopAudio();
+    heard.add(i);
+    status.textContent=item.term+'の再生が終わりました。発音を判定してください。';
+    updateGate();
+  };
+  audio.onerror=fail;
+  try{await audio.play();}catch(e){fail();}
 }
 
 async function load(){
-  const status=document.getElementById('status');
   try{
-    const r=await fetch('./audio/sbv2-legal-terms/manifest.json?v='+Date.now(),{cache:'no-store'});
-    if(!r.ok)throw new Error('manifest');
-    const m=await r.json();
-    const items=m.items||[];
-    document.getElementById('terms').innerHTML=items.map((v,i)=>`
-      <div class="card term-card">
-        <div>
-          <div class="term">${i+1}. ${v.term}</div>
-          <div class="reading">固定読み：${v.reading}</div>
-          <div class="meta">音素：${(v.phones||[]).join(' ')}</div>
-          <span class="tag">音素・アクセント固定</span>
-        </div>
-        <button data-play="${i}" data-src="${v.src}">▶ 再生</button>
-      </div>
-    `).join('');
-    document.querySelectorAll('button[data-play]').forEach(b=>{
-      b.onclick=()=>play(b.dataset.src,b);
+    const response=await fetch('./audio/sbv2-legal-terms/manifest.json',{cache:'no-store'});
+    if(!response.ok)throw new Error('manifest');
+    const m=await response.json();
+    const expected=['不確定期限','履行請求','履行遅滞','物上代位','牽連性','瑕疵'];
+    if(m.engine!=='Style-Bert-VITS2'||!Array.isArray(m.items)||m.items.length!==6||
+      m.items.some((v,i)=>v.term!==expected[i]||typeof v.reading!=='string'||
+        v.src!==`./audio/sbv2-legal-terms/term_0${i+1}.wav`))throw new Error('six terms');
+    items=m.items;
+    audioVersion=String(m.generatedAt||m.version);
+    revision=JSON.stringify([m.version,m.generatedAt,m.model,m.items]);
+    try{
+      const saved=JSON.parse(localStorage.getItem(STORAGE_KEY)||'null');
+      if(saved&&saved.revision===revision&&saved.judgments){
+        items.forEach(v=>{
+          const value=saved.judgments[v.term];
+          if(value==='ok'||value==='fix')judgments[v.term]=value;
+        });
+      }
+    }catch(e){document.getElementById('storageStatus').textContent='保存済みの判定を読み込めませんでした。再判定できます。';}
+    const terms=document.getElementById('terms');
+    items.forEach((v,i)=>{
+      const card=document.createElement('section');
+      card.className='card term-card';
+      card.innerHTML=`<div><div class="term"></div><div class="reading"></div></div>
+        <button data-play="${i}" aria-pressed="false">▶ 再生</button>
+        <fieldset class="judgment"><legend></legend>
+          <button data-judge="${i}" data-value="ok" aria-pressed="false" disabled>OK</button>
+          <button data-judge="${i}" data-value="fix" aria-pressed="false" disabled>要修正</button>
+        </fieldset>
+        <details><summary>生成時の指定を見る</summary><p class="meta"></p></details>`;
+      card.querySelector('.term').textContent=`${i+1}. ${v.term}`;
+      card.querySelector('.reading').textContent='読み：'+v.reading;
+      card.querySelector('legend').textContent=v.term+'の判定（最後まで聞いてから選択）';
+      card.querySelector('.meta').textContent='音素：'+(v.phones||[]).join(' ')+' ／ アクセント：'+(v.tones||[]).join(' ');
+      const button=card.querySelector('[data-play]');
+      button.setAttribute('aria-label',v.term+'を再生・停止');
+      button.onclick=()=>play(i,button);
+      card.querySelectorAll('[data-judge]').forEach(b=>{
+        b.onclick=()=>{judgments[v.term]=b.dataset.value;saveJudgments();updateGate();};
+      });
+      terms.appendChild(card);
     });
-    status.innerHTML=items.length===6
-      ? '<span class="ready">6語すべて生成済み。1語ずつ発音を確認できます。</span>'
-      : '音声データが不足しています。';
+    status.textContent='6語の音声を1語ずつ再生できます。';
+    updateGate();
     document.getElementById('engineMeta').textContent=
-      'エンジン：'+(m.engine||'')+' / モデル：'+(m.model||'')+
-      ' / モデルライセンス：'+(m.modelLicense||'');
+      'エンジン：'+m.engine+' ／ モデル：'+(m.model||'')+
+      ' ／ モデルライセンス：'+(m.modelLicense||'')+' ／ 音声生成日時：'+(m.generatedAt||'');
   }catch(e){
-    status.textContent='発音テストデータを読み込めませんでした。';
+    status.classList.add('error');
+    status.textContent='6語の発音テストデータを読み込めませんでした。通信を確認して再読み込みしてください。';
   }
 }
+window.addEventListener('pagehide',stopAudio);
+document.addEventListener('visibilitychange',()=>{if(document.hidden)stopAudio();});
 load();
 </script>
 </body>

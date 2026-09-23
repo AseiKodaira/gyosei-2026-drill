@@ -1,4 +1,4 @@
-const CACHE='gyosei2026-v17';
+const CACHE='gyosei2026-v18';
 const CORE=['./manifest.webmanifest','./icon.svg'];
 
 self.addEventListener('install',event=>{
@@ -12,7 +12,7 @@ self.addEventListener('install',event=>{
 self.addEventListener('activate',event=>{
   event.waitUntil(
     caches.keys()
-      .then(keys=>Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k))))
+      .then(keys=>Promise.all(keys.filter(k=>k.startsWith('gyosei2026-')&&k!==CACHE).map(k=>caches.delete(k))))
       .then(()=>self.clients.claim())
   );
 });
@@ -22,16 +22,21 @@ self.addEventListener('fetch',event=>{
   const req=event.request;
   const url=new URL(req.url);
 
+  if(url.origin!==self.location.origin) return;
+
   // Always prefer the network for page navigations and index.html so app updates appear immediately.
-  if(req.mode==='navigate' || url.pathname.endsWith('/index.html') || url.pathname.endsWith('/')){
+  if(req.mode==='navigate' || url.pathname.endsWith('/index.html') || url.pathname.endsWith('/voice-test.html') || url.pathname.endsWith('/sbv2-legal-terms/manifest.json') || url.pathname.endsWith('/')){
+    const pageKey=url.pathname.endsWith('/')?new URL('./index.html',req.url).href:url.origin+url.pathname;
     event.respondWith(
       fetch(req,{cache:'no-store'})
-        .then(resp=>{
-          const copy=resp.clone();
-          caches.open(CACHE).then(cache=>cache.put('./index.html',copy)).catch(()=>{});
+        .then(async resp=>{
+          if(resp.ok){
+            const copy=resp.clone();
+            await caches.open(CACHE).then(cache=>cache.put(pageKey,copy)).catch(()=>{});
+          }
           return resp;
         })
-        .catch(()=>caches.match('./index.html'))
+        .catch(async()=>await caches.match(pageKey)||new Response('オフラインです。通信を確認して再読み込みしてください。',{status:503,headers:{'Content-Type':'text/plain; charset=utf-8'}}))
     );
     return;
   }
@@ -46,7 +51,8 @@ self.addEventListener('fetch',event=>{
         }
         return resp;
       });
-      return cached || network;
+      if(cached){event.waitUntil(network.catch(()=>{}));return cached;}
+      return network;
     }).catch(()=>fetch(req))
   );
 });

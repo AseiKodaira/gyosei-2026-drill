@@ -1,4 +1,4 @@
-const CACHE='gyosei2026-v18';
+const CACHE='gyosei2026-v19';
 const CORE=['./manifest.webmanifest','./icon.svg'];
 
 self.addEventListener('install',event=>{

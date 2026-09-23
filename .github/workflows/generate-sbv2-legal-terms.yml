@@ -37,7 +37,7 @@ jobs:
           python -m pip install "torch==2.3.1" --index-url https://download.pytorch.org/whl/cpu
           python -m pip install "numpy<2" "transformers==4.46.3" "style-bert-vits2==2.5.0" scipy
 
-      - name: Generate six legal-term samples
+      - name: Generate first-term rework candidates
         env:
           HF_HUB_DISABLE_TELEMETRY: "1"
           TOKENIZERS_PARALLELISM: "false"

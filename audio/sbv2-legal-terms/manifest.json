@@ -1,22 +1,25 @@
 {
-  "version": 2,
-  "generatedAt": "2026-09-23T05:56:35.023933+00:00",
+  "version": 3,
+  "generatedAt": "2026-09-23T06:10:07.676741+00:00",
   "engine": "Style-Bert-VITS2",
   "model": "jvnv-F1-jp",
   "modelRepo": "litagin/style_bert_vits2_jvnv",
   "modelLicense": "CC BY-SA 4.0 (JVNV corpus model)",
-  "stage": "single-term-rework",
+  "stage": "neutral-read-rework",
   "term": "不確定期限",
   "reading": "ふかくていきげん",
-  "rejectedVersion": 1,
-  "rejectedReason": "The hiragana-only model input produced a non-Japanese mora length: きげーん.",
-  "testPolicy": "Compare one rejected term only. The written kanji is retained as model input, duration prediction is deterministic, and no remaining legal term is generated until this term passes listening review.",
+  "rejectedVersions": [
+    1,
+    2
+  ],
+  "rejectedReason": "Version 1 produced a non-Japanese mora length (きげーん); version 2 sounded surprised because the JVNV emotional model retained excessive intonation.",
+  "testPolicy": "Compare ordinary and flatter neutral readings of one term only. The written kanji and declarative punctuation are retained, duration is deterministic, and intonation is suppressed. No remaining legal term is generated until this term passes listening review.",
   "items": [
     {
-      "id": "surface-auto-normal",
-      "label": "候補A",
-      "description": "漢字本文・自動読み／アクセント・標準速度",
-      "src": "./audio/sbv2-legal-terms/term_01_surface-auto-normal.wav",
+      "id": "neutral-ordinary",
+      "label": "普通読み",
+      "description": "Neutral固定・抑揚35%・標準速度",
+      "src": "./audio/sbv2-legal-terms/term_01_neutral-ordinary.wav",
       "phones": [
         "_",
         "f",
@@ -33,6 +36,7 @@
         "g",
         "e",
         "N",
+        ".",
         "_"
       ],
       "tones": [
@@ -51,15 +55,17 @@
         0,
         0,
         0,
+        0,
         0
       ],
-      "length": 0.9
+      "length": 0.9,
+      "intonationScale": 0.35
     },
     {
-      "id": "surface-fixed-normal",
-      "label": "候補B",
-      "description": "漢字本文・読み／アクセント固定・標準速度",
-      "src": "./audio/sbv2-legal-terms/term_01_surface-fixed-normal.wav",
+      "id": "neutral-flatter",
+      "label": "さらに平坦",
+      "description": "Neutral固定・抑揚15%・標準速度",
+      "src": "./audio/sbv2-legal-terms/term_01_neutral-flatter.wav",
       "phones": [
         "_",
         "f",
@@ -70,12 +76,13 @@
         "u",
         "t",
         "e",
-        "i",
+        "e",
         "k",
         "i",
         "g",
         "e",
         "N",
+        ".",
         "_"
       ],
       "tones": [
@@ -84,62 +91,21 @@
         0,
         1,
         1,
-        0,
-        0,
-        0,
-        0,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
         1,
         0,
         0,
         0,
         0,
-        1,
         0
       ],
-      "length": 0.9
-    },
-    {
-      "id": "surface-fixed-compact",
-      "label": "候補C",
-      "description": "漢字本文・読み／アクセント固定・短めの拍",
-      "src": "./audio/sbv2-legal-terms/term_01_surface-fixed-compact.wav",
-      "phones": [
-        "_",
-        "f",
-        "u",
-        "k",
-        "a",
-        "k",
-        "u",
-        "t",
-        "e",
-        "i",
-        "k",
-        "i",
-        "g",
-        "e",
-        "N",
-        "_"
-      ],
-      "tones": [
-        0,
-        0,
-        0,
-        1,
-        1,
-        0,
-        0,
-        0,
-        0,
-        1,
-        0,
-        0,
-        0,
-        0,
-        1,
-        0
-      ],
-      "length": 0.76
+      "length": 0.9,
+      "intonationScale": 0.15
     }
   ]
 }

@@ -34,7 +34,18 @@ button{cursor:pointer}
 .btn{border:0;border-radius:14px;padding:13px 16px;font-weight:800;background:var(--navy);color:white;min-height:46px}.btn.secondary{background:#eaf1f8;color:var(--navy)}.btn.outline{background:white;color:var(--navy);border:1px solid #bed0e1}.btn.danger{background:var(--red)}.btn.full{width:100%}.btn-row{display:flex;gap:9px;flex-wrap:wrap}.btn:disabled{opacity:.45;cursor:not-allowed}
 .progressbar{height:9px;background:#e8edf4;border-radius:999px;overflow:hidden}.progressbar>i{display:block;height:100%;background:var(--blue);border-radius:999px}.list{display:flex;flex-direction:column;gap:8px}.list-row{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 13px;display:flex;align-items:center;gap:10px}.list-row .grow{flex:1;min-width:0}.list-row strong{font-size:13px}.list-row p{font-size:11px;color:var(--muted);margin:3px 0 0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.rank{width:28px;height:28px;border-radius:9px;background:#eef3f9;color:var(--navy);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:900}.score-pill{font-size:11px;font-weight:900;color:var(--red);background:var(--redbg);padding:5px 8px;border-radius:999px}
 .filters{display:grid;grid-template-columns:1fr 1fr;gap:8px}.field{display:flex;flex-direction:column;gap:5px}.field label{font-size:11px;font-weight:800;color:var(--muted)}.field select,.field input,.field textarea{width:100%;border:1px solid #ccd5e2;border-radius:12px;background:white;padding:11px;color:var(--ink)}.field textarea{min-height:100px;resize:vertical}
-.study-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}.question-card{background:white;border-radius:20px;padding:18px;border:1px solid var(--line);box-shadow:var(--shadow)}.q-meta{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}.q-stem{white-space:pre-wrap;font-size:15px;line-height:1.75;font-weight:700;margin:0 0 16px}.choice-list{display:flex;flex-direction:column;gap:9px}.choice{width:100%;text-align:left;border:1px solid #cfd7e3;background:#fff;border-radius:14px;padding:13px 14px;line-height:1.55;color:var(--ink)}.choice.selected{border-color:var(--blue);background:#edf5fc}.choice.correct{border-color:#69bd8d;background:var(--greenbg)}.choice.wrong{border-color:#e19a95;background:var(--redbg)}.choice .num{font-weight:900;color:var(--navy);margin-right:8px}.feedback{margin-top:14px;padding:14px;border-radius:14px;background:#f7f9fc;border:1px solid var(--line)}.feedback.good{background:var(--greenbg);border-color:#bde3cd}.feedback.bad{background:var(--redbg);border-color:#efc0bc}.feedback h4{margin:0 0 6px;font-size:14px}.feedback p{margin:0;font-size:12px;line-height:1.65;white-space:pre-wrap}.confidence{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:12px}.conf-btn{border:1px solid #cbd5e1;background:white;border-radius:12px;padding:10px;font-size:12px;font-weight:800}.conf-btn[data-c="understood"]{color:var(--green)}.conf-btn[data-c="none"]{color:var(--red)}
+.study-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}.question-card{background:white;border-radius:20px;padding:18px;border:1px solid var(--line);box-shadow:var(--shadow)}
+.textbook-card{background:linear-gradient(180deg,#ffffff,#f8fbff);border:1px solid #cfdceb;border-radius:22px;padding:20px;box-shadow:var(--shadow)}
+.textbook-kicker{font-size:11px;font-weight:900;letter-spacing:.08em;color:var(--blue);margin-bottom:7px}
+.textbook-title{font-size:23px;line-height:1.4;font-weight:950;color:var(--navy);margin:0 0 14px}
+.textbook-block{background:white;border:1px solid var(--line);border-radius:15px;padding:13px 14px;margin-top:10px}
+.textbook-block h4{margin:0 0 6px;font-size:12px;color:var(--muted)}
+.textbook-block p{margin:0;line-height:1.75;font-size:14px}
+.textbook-rap{margin-top:10px;background:var(--amberbg);border:1px solid #efd189;border-radius:15px;padding:13px 14px}
+.textbook-rap small{display:block;color:var(--amber);font-weight:900;margin-bottom:5px}
+.textbook-rap strong{font-size:16px;line-height:1.7;color:#553900}
+.phase-bar{display:flex;gap:6px;margin-bottom:12px}.phase-chip{flex:1;text-align:center;border-radius:999px;padding:7px 5px;font-size:10px;font-weight:900;background:#e9edf3;color:#7a8495}.phase-chip.active{background:var(--navy);color:white}
+.q-meta{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}.q-stem{white-space:pre-wrap;font-size:15px;line-height:1.75;font-weight:700;margin:0 0 16px}.choice-list{display:flex;flex-direction:column;gap:9px}.choice{width:100%;text-align:left;border:1px solid #cfd7e3;background:#fff;border-radius:14px;padding:13px 14px;line-height:1.55;color:var(--ink)}.choice.selected{border-color:var(--blue);background:#edf5fc}.choice.correct{border-color:#69bd8d;background:var(--greenbg)}.choice.wrong{border-color:#e19a95;background:var(--redbg)}.choice .num{font-weight:900;color:var(--navy);margin-right:8px}.feedback{margin-top:14px;padding:14px;border-radius:14px;background:#f7f9fc;border:1px solid var(--line)}.feedback.good{background:var(--greenbg);border-color:#bde3cd}.feedback.bad{background:var(--redbg);border-color:#efc0bc}.feedback h4{margin:0 0 6px;font-size:14px}.feedback p{margin:0;font-size:12px;line-height:1.65;white-space:pre-wrap}.confidence{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:12px}.conf-btn{border:1px solid #cbd5e1;background:white;border-radius:12px;padding:10px;font-size:12px;font-weight:800}.conf-btn[data-c="understood"]{color:var(--green)}.conf-btn[data-c="none"]{color:var(--red)}
 .tf{display:grid;grid-template-columns:1fr 1fr;gap:10px}.tf button{padding:20px 10px;font-size:18px}.wordbank{font-size:12px;line-height:1.8;padding:12px;background:#f5f7fb;border-radius:12px;margin-bottom:12px}.multi-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}.mock-timer{font-variant-numeric:tabular-nums;font-weight:900;color:var(--red);background:var(--redbg);padding:7px 10px;border-radius:10px}.mock-nav{display:flex;justify-content:space-between;gap:8px;margin-top:14px}.mock-grid{display:grid;grid-template-columns:repeat(10,1fr);gap:5px;margin-top:14px}.mock-grid button{border:0;border-radius:7px;background:#e9edf3;color:#536174;font-size:10px;height:28px}.mock-grid button.done{background:#dbece4;color:var(--green)}.mock-grid button.current{background:var(--navy);color:white}.mock-grid button.unknown{background:#fff0c7;color:#8b5a00;font-weight:900}.result-big{text-align:center;padding:20px}.result-big .num{font-size:54px;font-weight:950;color:var(--navy)}.thresholds{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.threshold{border-radius:12px;padding:11px;text-align:center;background:#f6f8fb}.threshold strong{display:block;font-size:18px}.threshold.ok{background:var(--greenbg);color:var(--green)}.threshold.ng{background:var(--redbg);color:var(--red)}
 .mnemonic{font-size:20px;line-height:1.7;font-weight:900;text-align:center;padding:25px 10px;color:var(--navy)}
 .rap-box{margin-top:12px;padding:15px;border-radius:16px;background:linear-gradient(135deg,#fff7df,#fffdf7);border:1px solid #efcf82}
@@ -52,7 +63,7 @@ button{cursor:pointer}
   <div id="app">
     <header class="topbar">
       <div>
-        <div class="eyebrow">行政書士試験 2026 <span style="opacity:.55;font-weight:700">v1.0.24</span></div>
+        <div class="eyebrow">行政書士試験 2026 <span style="opacity:.55;font-weight:700">v1.1.0</span></div>
         <h1 id="pageTitle">ホーム</h1>
       </div>
       <button class="icon-btn" id="quickReviewBtn" aria-label="今日の復習">↻</button>
@@ -81,7 +92,7 @@ window.GYOSEI_DATA={"mocks":{"mock1":[{"id":"MOCK1-01","mock":"mock1","no":1,"fo
 'use strict';
 
 const DATA = window.GYOSEI_DATA || {mocks:{}, predicted30:[], mnemonics:[], propositions:[]};
-const APP_VERSION = '1.0.24';
+const APP_VERSION = '1.1.0';
 const STORAGE_KEY = 'gyosei2026_state_v1';
 const EXAM_DATE_DEFAULT = '2026-11-08';
 const INTERVALS = [1,3,7,14,30];
@@ -235,7 +246,7 @@ function renderHome(){
     <div class="section-title">今日やる</div>
     <section class="grid">
       <div class="card clickable" data-action="home-study" data-mode="due"><span class="badge red">優先</span><div class="metric">${due}</div><div class="metric-label">復習期限が来た問題</div></div>
-      <div class="card clickable" data-action="home-study" data-mode="daily"><span class="badge">自動</span><div class="metric">${state.settings.newDaily}</div><div class="metric-label">新規＋復習の今日セット</div></div>
+      <div class="card clickable" data-action="home-study" data-mode="daily"><span class="badge">自動</span><div class="metric">${state.settings.newDaily}</div><div class="metric-label">参考書→問題の今日セット</div></div>
       <div class="card clickable" data-action="home-study" data-mode="weak"><span class="badge amber">弱点</span><div class="metric">${weak.length?weak[0].score:0}</div><div class="metric-label">弱点スコア最大</div></div>
       <div class="card clickable" data-action="home-study" data-mode="mnemonic"><span class="badge green">暗記</span><div class="metric">${mnemonics.length}</div><div class="metric-label">口ずさみフレーズ</div></div>
     </section>
@@ -268,7 +279,7 @@ function renderStudyMenu(){
     </div>
     <div class="section-title">学習モード</div>
     <div class="list">
-      ${studyModeRow('daily','今日の自動セット',`期限復習＋新規を最大 ${state.settings.newDaily} 問`,'自動')}
+      ${studyModeRow('daily','今日の自動セット v2',`新規3論点は参考書→問題、復習は問題から。最大 ${state.settings.newDaily} 問`,'v2')}
       ${studyModeRow('due','今日の復習',`${dueItems().length}問が期限到来`,'復習')}
       ${studyModeRow('pred','2026予想30問','10年分析・2026改正から作成','予想')}
       ${studyModeRow('prop','過去10年 命題○×',`${propositions.length.toLocaleString()}命題・肢単位`,'○×')}
@@ -304,10 +315,26 @@ function buildStudyItems(mode, topicKey){
   if(mode==='random') return shuffle(filterSubject([...predicted,...propositions])).slice(0,count);
   if(mode==='daily'){
     const due=dueItems().map(x=>itemMeta(x.id)).filter(Boolean);
-    const newPred=predicted.filter(x=>!state.progress[x.id]);
-    const newProp=propositions.filter(x=>!state.progress[x.id]);
-    const fresh=shuffle(filterSubject([...newPred,...newProp]));
-    return [...due,...fresh].slice(0,count);
+    const freshPool=shuffle(filterSubject([
+      ...predicted.filter(x=>!state.progress[x.id]),
+      ...propositions.filter(x=>!state.progress[x.id])
+    ]));
+    const newTopicTarget=Math.min(3,count);
+    const anchors=[]; const usedTopics=new Set();
+    for(const it of freshPool){
+      const key=(it.subject||'')+'｜'+(it.topic||it.field||'');
+      if(usedTopics.has(key))continue;
+      anchors.push(it);usedTopics.add(key);
+      if(anchors.length>=newTopicTarget)break;
+    }
+    const anchorIds=new Set(anchors.map(x=>x.id));
+    const dueCap=Math.max(0,count-anchors.length);
+    const dueSelected=due.slice(0,dueCap);
+    const usedIds=new Set([...anchorIds,...dueSelected.map(x=>x.id)]);
+    const fill=freshPool.filter(x=>!usedIds.has(x.id)).slice(0,Math.max(0,count-dueSelected.length-anchors.length));
+    const questions=[...dueSelected,...anchors,...fill];
+    questions._textbookAnchors=anchors;
+    return questions;
   }
   return [];
 }
@@ -316,8 +343,70 @@ function startStudy(mode, topicKey){
   const items=buildStudyItems(mode,topicKey);
   if(!items.length){toast('対象問題がありません'); if(route!=='study')setRoute('study'); return;}
   route='study'; titleEl.textContent='学習'; navButtons.forEach(b=>b.classList.toggle('active',b.dataset.route==='study'));
-  studySession={mode,items,idx:0,selected:null,submitted:false,score:null,answers:[],topicKey};
-  renderStudyItem(); window.scrollTo(0,0);
+  const textbookItems=(mode==='daily' && Array.isArray(items._textbookAnchors))?[...items._textbookAnchors]:[];
+  studySession={
+    mode,items:[...items],idx:0,selected:null,submitted:false,score:null,answers:[],topicKey,
+    phase:textbookItems.length?'textbook':'questions',textbookItems,textbookIdx:0
+  };
+  if(studySession.phase==='textbook')renderTextbookCard();else renderStudyItem();
+  window.scrollTo(0,0);
+}
+function compactTextbookExplanation(it){
+  let x=String(it.explanation||'').replace(/\s+/g,' ').trim();
+  if(x) return x.length>170?x.slice(0,168)+'…':x;
+  if(it.type==='proposition'){
+    const truth=it.correct?'正しい命題':'誤りの命題';
+    return `この論点では「${it.tag||it.field||'ルール'}」を確認する。今回の過去問肢は${truth}。原則・例外・主体・効果を分けて覚える。`;
+  }
+  return '原則・例外・主体・効果の4点に分けて整理し、問題で使える形にする。';
+}
+function textbookTrap(it){
+  if(it.trap && it.trap!=='正肢')return `過去問では「${it.trap}」で崩されやすい。`;
+  const t=String(it.topic||it.field||'');
+  if(/聴聞|弁明|取消|無効|執行停止|義務付け|差止め|自治事務|法定受託/.test(t))return '似た制度との要件・効果の入替えに注意。';
+  if(/期間|時効|利率|養育費|財産分与/.test(t))return '数字・起算点・例外の入替えに注意。';
+  return '主体・要件・効果・例外のどこを入れ替えられているかを見る。';
+}
+function renderTextbookCard(){
+  const s=studySession;if(!s){renderStudyMenu();return;}
+  if(!s.textbookItems?.length || s.textbookIdx>=s.textbookItems.length){
+    s.phase='questions';s.idx=0;s.submitted=false;
+    toast('問題パートへ');
+    renderStudyItem();window.scrollTo(0,0);return;
+  }
+  const it=s.textbookItems[s.textbookIdx];
+  const title=it.topic||it.field||it.subject||'今日の論点';
+  const expl=compactTextbookExplanation(it);
+  const rap=rapPhraseFor(it,'',expl);
+  const step=s.textbookIdx+1,total=s.textbookItems.length;
+  titleEl.textContent='今日の自動セット v2';
+  main.innerHTML=`
+    <div class="phase-bar"><div class="phase-chip active">① 参考書 ${step}/${total}</div><div class="phase-chip">② 問題</div></div>
+    <div class="study-head"><div><strong>新規論点 ${step} / ${total}</strong></div><button class="btn secondary" id="quitTextbook">終了</button></div>
+    <section class="textbook-card">
+      <div class="textbook-kicker">📘 まず30〜60秒で理解</div>
+      <h2 class="textbook-title">${esc(title)}</h2>
+      <div class="q-meta"><span class="badge">${esc(it.subject||'')}</span>${it.year?`<span class="badge">${it.year}</span>`:''}</div>
+      <div class="textbook-block"><h4>まずこれだけ</h4><p>${nl(expl)}</p></div>
+      <div class="textbook-block"><h4>試験での注意</h4><p>${esc(textbookTrap(it))}</p></div>
+      <div class="textbook-rap"><small>🎤 口に出すキー</small><strong>${esc(rap)}</strong></div>
+      <button class="btn secondary full" id="hideRecall" style="margin-top:12px">🧠 隠して1回思い出す</button>
+      <div id="recallBox"></div>
+      <button class="btn full" id="nextTextbook" style="margin-top:10px">${step===total?'問題パートへ':'次の参考書へ'}</button>
+    </section>`;
+  document.getElementById('quitTextbook').onclick=()=>{studySession=null;renderStudyMenu();};
+  document.getElementById('hideRecall').onclick=()=>{
+    const box=document.getElementById('recallBox');
+    box.innerHTML=`<div class="feedback" style="margin-top:10px"><h4>画面を見ずに言ってみる</h4><p>「${esc(title)}」の原則・例外・数字のうち、今覚えたポイントを1つ口に出してください。</p></div>`;
+    document.querySelectorAll('.textbook-block,.textbook-rap').forEach(x=>x.style.filter='blur(7px)');
+    document.getElementById('hideRecall').textContent='表示を戻す';
+    document.getElementById('hideRecall').onclick=()=>{
+      document.querySelectorAll('.textbook-block,.textbook-rap').forEach(x=>x.style.filter='');
+      document.getElementById('hideRecall').disabled=true;
+      document.getElementById('hideRecall').textContent='✓ 想起した';
+    };
+  };
+  document.getElementById('nextTextbook').onclick=()=>{s.textbookIdx++;renderTextbookCard();window.scrollTo(0,0);};
 }
 function renderStudyItem(){
   const s=studySession; if(!s){renderStudyMenu();return;}
@@ -338,7 +427,8 @@ function renderStudyItem(){
   if(it.type==='proposition' || it.format==='5肢択一' || it.format==='多肢選択'){
     body += `<button class="btn secondary full" style="margin-top:12px" data-dontknow="1">？ わからない / 答えを見る</button>`;
   }
-  main.innerHTML=`<div class="study-head"><div><strong>${s.idx+1} / ${s.items.length}</strong><div class="progressbar" style="width:160px;margin-top:6px"><i style="width:${progress}%"></i></div></div><button class="btn secondary" id="quitStudy">終了</button></div><div class="question-card"><div class="q-meta">${metaBadges}</div>${body}<div id="studyFeedback"></div></div>`;
+  const phaseHtml=s.mode==='daily'?'<div class="phase-bar"><div class="phase-chip">① 参考書</div><div class="phase-chip active">② 問題</div></div>':'';
+  main.innerHTML=`${phaseHtml}<div class="study-head"><div><strong>${s.idx+1} / ${s.items.length}</strong><div class="progressbar" style="width:160px;margin-top:6px"><i style="width:${progress}%"></i></div></div><button class="btn secondary" id="quitStudy">終了</button></div><div class="question-card"><div class="q-meta">${metaBadges}</div>${body}<div id="studyFeedback"></div></div>`;
   document.getElementById('quitStudy').onclick=()=>{studySession=null;renderStudyMenu();};
   if(it.type==='proposition') document.querySelectorAll('[data-tf]').forEach(b=>b.onclick=()=>submitStudy(it,b.dataset.tf==='true'));
   else if(it.format==='5肢択一') document.querySelectorAll('[data-choice]').forEach(b=>b.onclick=()=>submitStudy(it,b.dataset.choice));
@@ -845,7 +935,7 @@ function submitWrittenStudy(it){
 }
 function nextStudy(){studySession.idx++;studySession.submitted=false;studySession.score=null;renderStudyItem();window.scrollTo(0,0);}
 function renderStudyDone(){
-  main.innerHTML=`<div class="card result-big"><div class="badge green">完了</div><div class="num">${studySession.items.length}</div><p>このセットを終えました。回答結果から次回復習日を自動設定しています。</p><div class="btn-row" style="justify-content:center"><button class="btn" id="studyAgain">もう一度</button><button class="btn secondary" id="studyHome">学習メニュー</button></div></div>`;
+  main.innerHTML=`<div class="card result-big"><div class="badge green">完了</div><div class="num">${studySession.items.length}</div><p>今日のセットを完了しました。新規論点は参考書→問題、復習論点は問題から確認しました。回答結果から次回復習日を自動設定しています。</p><div class="btn-row" style="justify-content:center"><button class="btn" id="studyAgain">もう一度</button><button class="btn secondary" id="studyHome">学習メニュー</button></div></div>`;
   document.getElementById('studyAgain').onclick=()=>startStudy(studySession.mode,studySession.topicKey);
   document.getElementById('studyHome').onclick=()=>{studySession=null;renderStudyMenu();};
 }

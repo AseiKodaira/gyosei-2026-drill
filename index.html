@@ -63,7 +63,7 @@ button{cursor:pointer}
   <div id="app">
     <header class="topbar">
       <div>
-        <div class="eyebrow">行政書士試験 2026 <span style="opacity:.55;font-weight:700">v1.2.1</span></div>
+        <div class="eyebrow">行政書士試験 2026 <span style="opacity:.55;font-weight:700">v1.2.2</span></div>
         <h1 id="pageTitle">ホーム</h1>
       </div>
       <button class="icon-btn" id="quickReviewBtn" aria-label="今日の復習">↻</button>
@@ -92,7 +92,7 @@ window.GYOSEI_DATA={"mocks":{"mock1":[{"id":"MOCK1-01","mock":"mock1","no":1,"fo
 'use strict';
 
 const DATA = window.GYOSEI_DATA || {mocks:{}, predicted30:[], mnemonics:[], propositions:[]};
-const APP_VERSION = '1.2.1';
+const APP_VERSION = '1.2.2';
 const STORAGE_KEY = 'gyosei2026_state_v1';
 const EXAM_DATE_DEFAULT = '2026-11-08';
 const INTERVALS = [1,3,7,14,30];
@@ -313,6 +313,21 @@ function uniqueStudyItems(items){
     seen.add(it.id);out.push(it);
   }
   return out;
+}
+function syncPastGroupProgress(it){
+  if(!it||it.type!=='pastgroup')return;
+  const gp=state.progress[it.id];
+  if(!gp)return;
+  for(const member of it.members||[]){
+    const p=state.progress[member.id];
+    if(!p)continue;
+    p.due=gp.due;
+    p.stage=gp.stage;
+    p.last=gp.last;
+    p.lastConfidence=gp.lastConfidence;
+    p.lastCorrect=gp.lastCorrect;
+  }
+  saveState();
 }
 function getProgress(id){ return state.progress[id] || null; }
 function dueItems(){
@@ -1154,6 +1169,7 @@ function submitDontKnow(it){
   const rawExpl=it.explanation||'';
   const answer=answerTextFor(it);
   recordProgress(it.id,false,'none',{lastSkipped:true});
+  syncPastGroupProgress(it);
   const fb=document.getElementById('studyFeedback');
   fb.innerHTML=unknownStudyFeedbackHtml(it,answer,rawExpl);
   bindRapControls(it,answer,rawExpl);
@@ -1183,7 +1199,7 @@ function submitStudy(it, answer){
   const expl=it.type==='proposition'?`論点：${it.tag||''}\n誤肢パターン：${it.trap||''}`:(it.explanation||'');
   fb.innerHTML=answeredStudyFeedbackHtml(it,correct,truth,expl);
   bindRapControls(it,truth,expl);
-  document.querySelectorAll('[data-conf]').forEach(b=>b.onclick=()=>{recordProgress(it.id,correct,b.dataset.conf);nextStudy();});
+  document.querySelectorAll('[data-conf]').forEach(b=>b.onclick=()=>{recordProgress(it.id,correct,b.dataset.conf);syncPastGroupProgress(it);nextStudy();});
 }
 function submitWrittenStudy(it){
   if(studySession.submitted)return; studySession.submitted=true;

@@ -63,7 +63,7 @@ button{cursor:pointer}
   <div id="app">
     <header class="topbar">
       <div>
-        <div class="eyebrow">行政書士試験 2026 <span style="opacity:.55;font-weight:700">v1.2.0</span></div>
+        <div class="eyebrow">行政書士試験 2026 <span style="opacity:.55;font-weight:700">v1.2.1</span></div>
         <h1 id="pageTitle">ホーム</h1>
       </div>
       <button class="icon-btn" id="quickReviewBtn" aria-label="今日の復習">↻</button>
@@ -92,7 +92,7 @@ window.GYOSEI_DATA={"mocks":{"mock1":[{"id":"MOCK1-01","mock":"mock1","no":1,"fo
 'use strict';
 
 const DATA = window.GYOSEI_DATA || {mocks:{}, predicted30:[], mnemonics:[], propositions:[]};
-const APP_VERSION = '1.2.0';
+const APP_VERSION = '1.2.1';
 const STORAGE_KEY = 'gyosei2026_state_v1';
 const EXAM_DATE_DEFAULT = '2026-11-08';
 const INTERVALS = [1,3,7,14,30];
@@ -160,9 +160,45 @@ for(const p of propositions){
   if(!propositionQuestionSets.has(key))propositionQuestionSets.set(key,[]);
   propositionQuestionSets.get(key).push(p);
 }
+
 for(const arr of propositionQuestionSets.values()){
   arr.sort((a,b)=>String(a.item||'').localeCompare(String(b.item||''),'ja',{numeric:true}));
 }
+
+const pastQuestionGroups=[];
+const pastQuestionGroupByMemberId=new Map();
+for(const arr of propositionQuestionSets.values()){
+  if(arr.length<3)continue;
+  const first=arr[0];
+  const correctIndexes=arr.map((p,i)=>p.correct?String(i+1):null).filter(Boolean);
+  const topicCounts=new Map();
+  for(const p of arr){
+    const k=p.tag||p.field||p.subject||'過去問';
+    topicCounts.set(k,(topicCounts.get(k)||0)+1);
+  }
+  const topic=[...topicCounts.entries()].sort((a,b)=>b[1]-a[1])[0]?.[0]||first.field||'過去問';
+  const g={
+    id:'PAST-'+String(first.year)+'-'+String(first.qno),
+    type:'pastgroup',
+    format:'複数肢判定',
+    year:first.year,
+    qno:first.qno,
+    subject:first.subject,
+    field:first.field,
+    topic,
+    source:first.source,
+    members:arr,
+    choices:arr.map(p=>p.statement||''),
+    answers:correctIndexes,
+    points:4,
+    stem:String(first.year||'')+'年度 問'+String(first.qno||'')+'の過去問肢をまとめた実戦問題です。次の'+String(arr.length)+'つの記述をすべて読み、法令・判例に照らして妥当なものをすべて選んでください。',
+    explanation:'正しい肢は '+(correctIndexes.length?correctIndexes.join('・'):'なし')+'。各肢の理由を解答後に確認してください。'
+  };
+  pastQuestionGroups.push(g);
+  itemMap.set(g.id,g);
+  for(const p of arr)pastQuestionGroupByMemberId.set(p.id,g);
+}
+
 function propositionSiblings(it){
   if(!it||it.type!=='proposition')return [];
   return propositionQuestionSets.get(String(it.year||'')+'-'+String(it.qno||''))||[it];
@@ -208,12 +244,19 @@ function propositionExplanationText(p){
   return '誤り。'+trap+(rule?'正しい整理は「'+rule+'」。':'原則・要件・効果・例外のどこが入れ替わっているか確認する。');
 }
 function coreExplanationText(it){
+  if(it&&it.type==='pastgroup'){
+    const correct=(it.answers||[]).join('・')||'なし';
+    return 'この問題は「'+String(it.topic||it.field||it.subject)+'」を中心に複数肢を横断して判定する。正しい肢は '+correct+'。正解番号だけでなく、各肢で主体・要件・効果・例外のどこが判断点かを確認する。';
+  }
   const x=cleanLegalText((it&&it.explanation)||(it&&it.model)||relatedQuestionExplanation(it)||'');
   if(x)return x;
   if(it&&it.type==='proposition')return propositionExplanationText(it);
   return '正解だけでなく、誤りの肢で主体・要件・効果・例外のどこが変えられているかまで確認する。';
 }
 function choiceReviewHtml(it){
+  if(it&&it.type==='pastgroup'){
+    return '<div class="choice-review">'+(it.members||[]).map((p,i)=>'<div class="choice-review-row '+(p.correct?'good':'bad')+'"><strong>肢 '+String(i+1)+'　'+(p.correct?'○ 妥当':'× 誤り')+'</strong><p>'+nl(propositionExplanationText(p))+'</p></div>').join('')+'</div>';
+  }
   if(it&&it.type==='proposition'){
     const set=propositionSiblings(it);
     return '<div class="choice-review">'+set.map((p,i)=>'<div class="choice-review-row '+(p.correct?'good':'bad')+'"><strong>肢 '+String(i+1)+'　'+(p.correct?'○ 妥当':'× 誤り')+'</strong><p>'+nl(propositionExplanationText(p))+'</p></div>').join('')+'</div>';
@@ -258,9 +301,19 @@ function unknownStudyFeedbackHtml(it,answer,expl){
 }
 
 
-const subjects = ['すべて',...Array.from(new Set([...mockQuestions,...predicted,...propositions].map(x=>x.subject).filter(Boolean))).sort()];
+const subjects = ['すべて',...Array.from(new Set([...mockQuestions,...predicted,...propositions,...pastQuestionGroups].map(x=>x.subject).filter(Boolean))).sort()];
 
 function itemMeta(id){ return itemMap.get(id); }
+function practicalStudyItem(it){ return it?.type==='proposition'?(pastQuestionGroupByMemberId.get(it.id)||it):it; }
+function uniqueStudyItems(items){
+  const out=[],seen=new Set();
+  for(const raw of items){
+    const it=practicalStudyItem(raw);
+    if(!it||seen.has(it.id))continue;
+    seen.add(it.id);out.push(it);
+  }
+  return out;
+}
 function getProgress(id){ return state.progress[id] || null; }
 function dueItems(){
   const t=today(); return Object.entries(state.progress).filter(([,p])=>p.due && p.due<=t && itemMap.has(p.id||'')===false ? false : true)
@@ -386,9 +439,9 @@ function renderStudyMenu(){
       ${studyModeRow('daily','今日の自動セット v2',`新規${state.settings.newTopics||3}論点＝参考書→想起→問題。その後に期限復習。最大 ${state.settings.newDaily} 問`,'v2')}
       ${studyModeRow('due','今日の復習',`${dueItems().length}問が期限到来`,'復習')}
       ${studyModeRow('pred','2026予想30問','10年分析・2026改正から作成','予想')}
-      ${studyModeRow('prop','過去10年 命題○×',`${propositions.length.toLocaleString()}命題・肢単位`,'○×')}
+      ${studyModeRow('prop','過去10年 実戦問題',`${pastQuestionGroups.length.toLocaleString()}問・3〜5肢まとめ読み`,'過去問')}
       ${studyModeRow('weak','弱点だけ','誤答・勘・2択の多い問題から','弱点')}
-      ${studyModeRow('random','ランダム','予想＋命題からランダム出題','混合')}
+      ${studyModeRow('random','ランダム','予想＋過去問実戦問題からランダム出題','混合')}
       ${studyModeRow('mnemonic','口ずさみ暗記',`${mnemonics.length}フレーズ`,'暗記')}
     </div>
   `;
@@ -428,7 +481,7 @@ function dailyTopicWasSeen(it){
   return false;
 }
 function dailyRelatedFresh(base,limit=2){
-  return filterSubject([...predicted,...propositions])
+  return filterSubject([...predicted,...pastQuestionGroups])
     .filter(x=>x.id!==base.id && !state.progress[x.id])
     .map(x=>({x,score:dailyTopicScore(base,x)}))
     .filter(z=>z.score>=3)
@@ -439,11 +492,13 @@ function dailyRelatedFresh(base,limit=2){
 
 function buildStudyItems(mode, topicKey){
   const count=state.settings.newDaily||20;
-  if(mode==='due') return dueItems().map(x=>itemMeta(x.id)).filter(Boolean);
+  if(mode==='due') return uniqueStudyItems(dueItems().map(x=>itemMeta(x.id)).filter(Boolean));
   if(mode==='pred') return filterSubject(predicted).slice(0,Math.max(count,30));
   if(mode==='prop'){
-    const due=dueItems().map(x=>itemMeta(x.id)).filter(x=>x?.type==='proposition');
-    const fresh=filterSubject(propositions.filter(p=>!state.progress[p.id]));
+    const due=uniqueStudyItems(dueItems().map(x=>itemMeta(x.id)).filter(Boolean))
+      .filter(x=>x?.type==='pastgroup'||x?.type==='proposition');
+    const used=new Set(due.map(x=>x.id));
+    const fresh=filterSubject(pastQuestionGroups.filter(p=>!state.progress[p.id]&&!used.has(p.id)));
     return [...due,...shuffle(fresh)].slice(0,count);
   }
   if(mode==='weak'){
@@ -452,14 +507,14 @@ function buildStudyItems(mode, topicKey){
     else ids=Object.keys(state.progress).sort((a,b)=>weaknessScore(state.progress[b])-weaknessScore(state.progress[a]));
     return filterSubject(ids.map(itemMeta).filter(Boolean)).slice(0,count);
   }
-  if(mode==='random') return shuffle(filterSubject([...predicted,...propositions])).slice(0,count);
+  if(mode==='random') return shuffle(filterSubject([...predicted,...pastQuestionGroups])).slice(0,count);
   if(mode==='daily'){
     const target=Math.max(10,state.settings.newDaily||20);
     const newTopicTarget=Math.max(1,Math.min(5,state.settings.newTopics||3));
-    const due=dueItems().map(x=>itemMeta(x.id)).filter(Boolean);
+    const due=uniqueStudyItems(dueItems().map(x=>itemMeta(x.id)).filter(Boolean));
 
     // 未導入論点を優先。2026予想(S→A)を先にし、その後に10年命題。
-    const fresh=filterSubject([...predicted,...propositions])
+    const fresh=filterSubject([...predicted,...pastQuestionGroups])
       .filter(x=>!state.progress[x.id])
       .map((x,idx)=>({
         x,idx,
@@ -532,6 +587,10 @@ function startStudy(mode, topicKey){
 function compactTextbookExplanation(it){
   let x=String(it.explanation||'').replace(/\s+/g,' ').trim();
   if(x) return x.length>170?x.slice(0,168)+'…':x;
+  if(it.type==='pastgroup'){
+    const correct=(it.answers||[]).join('・')||'なし';
+    return `この論点では「${it.topic||it.field||'ルール'}」を確認する。実戦では${it.choices?.length||0}肢をまとめて読み、正しい肢（${correct}）を選ぶ。各肢を原則・例外・主体・効果に分けて判定する。`;
+  }
   if(it.type==='proposition'){
     const truth=it.correct?'正しい命題':'誤りの命題';
     return `この論点では「${it.tag||it.field||'ルール'}」を確認する。今回の過去問肢は${truth}。原則・例外・主体・効果を分けて覚える。`;
@@ -599,7 +658,9 @@ function renderStudyItem(){
   const progress=Math.round((s.idx/s.items.length)*100);
   const metaBadges=`<span class="badge">${esc(it.subject||'')}</span><span class="badge">${esc(it.topic||it.field||'')}</span>${it.year?`<span class="badge">${it.year}</span>`:''}`;
   let body='';
-  if(it.type==='proposition'){
+  if(it.type==='pastgroup'){
+    body='<p class="q-stem">'+nl(it.stem)+'</p><div class="exam-note">本試験のように複数肢をまとめて読む練習です。妥当だと思う肢をすべて選んでから答え合わせしてください。</div><div class="choice-list">'+(it.choices||[]).map((x,i)=>'<button class="choice" data-past-choice="'+String(i+1)+'"><span class="num">'+String(i+1)+'</span>'+nl(x)+'</button>').join('')+'</div><button class="btn full" id="pastSubmit" style="margin-top:12px">答え合わせ</button>';
+  }else if(it.type==='proposition'){
     body=propositionQuestionHtml(it);
   }else if(it.format==='5肢択一'){
     body=fiveChoiceQuestionHtml(it);
@@ -608,7 +669,7 @@ function renderStudyItem(){
   }else{
     body=`<p class="q-stem">${nl(it.stem)}</p><div class="field"><label>自分の答案</label><textarea id="writtenAnswer" placeholder="40字程度で書く"></textarea></div><button class="btn full" style="margin-top:10px" id="writtenReveal">模範解答を見る</button>`;
   }
-  if(it.type==='proposition' || it.format==='5肢択一' || it.format==='多肢選択'){
+  if(it.type==='pastgroup' || it.type==='proposition' || it.format==='5肢択一' || it.format==='多肢選択'){
     body += `<button class="btn secondary full" style="margin-top:12px" data-dontknow="1">？ わからない / 答えを見る</button>`;
   }
   const isNewDaily=s.mode==='daily' && s.newQuestionIds?.has(it.id);
@@ -617,7 +678,11 @@ function renderStudyItem(){
     : '';
   main.innerHTML=`${phaseHtml}<div class="study-head"><div><strong>${s.idx+1} / ${s.items.length}</strong><div class="progressbar" style="width:160px;margin-top:6px"><i style="width:${progress}%"></i></div></div><button class="btn secondary" id="quitStudy">終了</button></div><div class="question-card"><div class="q-meta">${metaBadges}</div>${body}<div id="studyFeedback"></div></div>`;
   document.getElementById('quitStudy').onclick=()=>{studySession=null;renderStudyMenu();};
-  if(it.type==='proposition') document.querySelectorAll('[data-tf]').forEach(b=>b.onclick=()=>submitStudy(it,b.dataset.tf==='true'));
+  if(it.type==='pastgroup'){
+    document.querySelectorAll('[data-past-choice]').forEach(b=>b.onclick=()=>b.classList.toggle('selected'));
+    document.getElementById('pastSubmit').onclick=()=>submitStudy(it,[...document.querySelectorAll('[data-past-choice].selected')].map(b=>b.dataset.pastChoice));
+  }
+  else if(it.type==='proposition') document.querySelectorAll('[data-tf]').forEach(b=>b.onclick=()=>submitStudy(it,b.dataset.tf==='true'));
   else if(it.format==='5肢択一') document.querySelectorAll('[data-choice]').forEach(b=>b.onclick=()=>submitStudy(it,b.dataset.choice));
   else if(it.format==='多肢選択') document.getElementById('multiSubmit').onclick=()=>submitStudy(it,[...document.querySelectorAll('[data-multi]')].map(x=>x.value));
   else document.getElementById('writtenReveal').onclick=()=>submitWrittenStudy(it);
@@ -840,6 +905,7 @@ function shortExplanationText(text){
   return parts.slice(0,2).join('');
 }
 function answerTextFor(it){
+  if(it.type==='pastgroup')return `正解：${(it.answers||[]).length?(it.answers||[]).join('・'):'該当なし'}`;
   if(it.type==='proposition')return `正解：${it.correct?'○ 正しい':'× 誤り'}`;
   if(it.format==='多肢選択')return `正解：${(it.answers||[]).join(' / ')}`;
   if(it.format==='記述式')return `模範解答：${it.model||'解答例を確認'}`;
@@ -1074,7 +1140,10 @@ function rapHtml(it,truth,expl){
 function submitDontKnow(it){
   if(studySession.submitted)return;
   studySession.submitted=true; studySession.score=false;
-  if(it.type==='proposition'){
+  if(it.type==='pastgroup'){
+    document.querySelectorAll('[data-past-choice]').forEach(b=>{b.disabled=true;if((it.answers||[]).includes(b.dataset.pastChoice))b.classList.add('correct');});
+    const ps=document.getElementById('pastSubmit');if(ps)ps.disabled=true;
+  }else if(it.type==='proposition'){
     document.querySelectorAll('[data-tf]').forEach(b=>b.disabled=true);
   }else if(it.format==='5肢択一'){
     document.querySelectorAll('[data-choice]').forEach(b=>{b.disabled=true;if(b.dataset.choice===String(it.answers?.[0]||''))b.classList.add('correct');});
@@ -1093,15 +1162,24 @@ function submitDontKnow(it){
 function submitStudy(it, answer){
   if(studySession.submitted)return;
   let correct=false;
-  if(it.type==='proposition') correct=String(answer)===String(it.correct);
+  if(it.type==='pastgroup'){
+    const got=[...(answer||[])].map(String).sort();
+    const want=[...(it.answers||[])].map(String).sort();
+    correct=got.length===want.length&&want.every((x,i)=>x===got[i]);
+  }else if(it.type==='proposition') correct=String(answer)===String(it.correct);
   else if(it.format==='5肢択一') correct=String(answer)===String(it.answers?.[0]||'');
   else correct=(it.answers||[]).every((a,i)=>String(answer[i])===String(a));
   studySession.submitted=true; studySession.score=correct;
   const fb=document.getElementById('studyFeedback');
-  if(it.format==='5肢択一'){
+  if(it.type==='pastgroup'){
+    const got=new Set((answer||[]).map(String));
+    const want=(it.answers||[]).map(String);
+    document.querySelectorAll('[data-past-choice]').forEach(b=>{const v=b.dataset.pastChoice;b.disabled=true;if(want.includes(v))b.classList.add('correct');else if(got.has(v))b.classList.add('wrong');});
+    const ps=document.getElementById('pastSubmit');if(ps)ps.disabled=true;
+  }else if(it.format==='5肢択一'){
     document.querySelectorAll('[data-choice]').forEach(b=>{const v=b.dataset.choice;b.disabled=true;if(v===String(it.answers?.[0]))b.classList.add('correct');else if(v===String(answer))b.classList.add('wrong');});
   }
-  const truth=it.type==='proposition'?(it.correct?'○ 正しい':'× 誤り'):(it.format==='多肢選択'?`正解：${it.answers.join(' / ')}`:`正解：${it.answers?.[0]||''}`);
+  const truth=answerTextFor(it);
   const expl=it.type==='proposition'?`論点：${it.tag||''}\n誤肢パターン：${it.trap||''}`:(it.explanation||'');
   fb.innerHTML=answeredStudyFeedbackHtml(it,correct,truth,expl);
   bindRapControls(it,truth,expl);

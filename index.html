@@ -63,7 +63,7 @@ button{cursor:pointer}
   <div id="app">
     <header class="topbar">
       <div>
-        <div class="eyebrow">行政書士試験 2026 <span style="opacity:.55;font-weight:700">v1.3.0</span></div>
+        <div class="eyebrow">行政書士試験 2026 <span style="opacity:.55;font-weight:700">v1.3.1</span></div>
         <h1 id="pageTitle">ホーム</h1>
       </div>
       <button class="icon-btn" id="quickReviewBtn" aria-label="今日の復習">↻</button>
@@ -92,7 +92,7 @@ window.GYOSEI_DATA={"mocks":{"mock1":[{"id":"MOCK1-01","mock":"mock1","no":1,"fo
 'use strict';
 
 const DATA = window.GYOSEI_DATA || {mocks:{}, predicted30:[], mnemonics:[], propositions:[]};
-const APP_VERSION = '1.3.0';
+const APP_VERSION = '1.3.1';
 const STORAGE_KEY = 'gyosei2026_state_v1';
 const EXAM_DATE_DEFAULT = '2026-11-08';
 const INTERVALS = [1,3,7,14,30];
@@ -209,6 +209,10 @@ const CURRENT_LAW_EXCLUSIONS=new Map([
   ['PAST-2016-33',{status:'OBSOLETE_BY_AMENDMENT',reason:'債務不履行（旧法）を前提とする過去問。2020年施行の債権法改正後の学習には不適切なため通常出題から除外。',replacement:'CURRENT26-02'}],
   ['PAST-2017-28',{status:'OBSOLETE_BY_AMENDMENT',reason:'錯誤（旧法）を前提とする過去問。2020年施行の改正民法の錯誤規定とずれるため通常出題から除外。',replacement:'CURRENT26-03'}]
 ]);
+const CURRENT_LAW_HOLDS=new Map([
+  ['PAST-2016-35',{status:'HOLD_REVIEW',reason:'養子縁組・親権関係は2026年4月1日施行改正の影響範囲。肢別の現行性確認が終わるまで通常出題しない。'}],
+  ['PAST-2018-34',{status:'HOLD_REVIEW',reason:'離婚・親権・親子交流・財産分与・裁判離婚原因を横断し、2026年4月1日施行改正の影響範囲を含むため肢別確認まで通常出題しない。'}]
+]);
 
 const currentLawSupplements=[
   {
@@ -268,15 +272,15 @@ const currentLawSupplements=[
 ];
 currentLawSupplements.forEach(q=>itemMap.set(q.id,q));
 
-const currentPastQuestionGroups=pastQuestionGroups.filter(g=>!CURRENT_LAW_EXCLUSIONS.has(g.id));
+const currentPastQuestionGroups=pastQuestionGroups.filter(g=>!CURRENT_LAW_EXCLUSIONS.has(g.id)&&!CURRENT_LAW_HOLDS.has(g.id));
 const currentStudyPool=[...predicted,...currentLawSupplements,...currentPastQuestionGroups];
 
 function isCurrentLawEligible(it){
   if(!it)return false;
-  if(it.type==='pastgroup')return !CURRENT_LAW_EXCLUSIONS.has(it.id);
+  if(it.type==='pastgroup')return !CURRENT_LAW_EXCLUSIONS.has(it.id)&&!CURRENT_LAW_HOLDS.has(it.id);
   if(it.type==='proposition'){
     const g=pastQuestionGroupByMemberId.get(it.id);
-    return !(g&&CURRENT_LAW_EXCLUSIONS.has(g.id))&&!/旧法/.test(String(it.field||'')+' '+String(it.tag||''));
+    return !(g&&(CURRENT_LAW_EXCLUSIONS.has(g.id)||CURRENT_LAW_HOLDS.has(g.id)))&&!/旧法/.test(String(it.field||'')+' '+String(it.tag||''));
   }
   return true;
 }
@@ -539,7 +543,7 @@ function renderStudyMenu(){
       ${studyModeRow('due','今日の復習',`${dueItems().length}問が期限到来`,'復習')}
       ${studyModeRow('pred','2026重点予想',`${predicted.length+currentLawSupplements.length}問・改正法補充込み`,'予想')}
       ${studyModeRow('currentlaw','2026改正法 補充',`${currentLawSupplements.length}問・一次資料確認済み`,'新法')}
-      ${studyModeRow('prop','過去10年 実戦問題',`${currentPastQuestionGroups.length.toLocaleString()}問・旧法${CURRENT_LAW_EXCLUSIONS.size}問除外`,'過去問')}
+      ${studyModeRow('prop','過去10年 実戦問題',`${currentPastQuestionGroups.length.toLocaleString()}問・旧法${CURRENT_LAW_EXCLUSIONS.size}問除外＋${CURRENT_LAW_HOLDS.size}問保留`,'過去問')}
       ${studyModeRow('weak','弱点だけ','誤答・勘・2択の多い問題から','弱点')}
       ${studyModeRow('random','ランダム','現行法確認済みの予想＋改正法＋過去問から出題','混合')}
       ${studyModeRow('mnemonic','口ずさみ暗記',`${mnemonics.length}フレーズ`,'暗記')}

@@ -63,7 +63,7 @@ button{cursor:pointer}
   <div id="app">
     <header class="topbar">
       <div>
-        <div class="eyebrow">行政書士試験 2026 <span style="opacity:.55;font-weight:700">v1.2.2</span></div>
+        <div class="eyebrow">行政書士試験 2026 <span style="opacity:.55;font-weight:700">v1.3.0</span></div>
         <h1 id="pageTitle">ホーム</h1>
       </div>
       <button class="icon-btn" id="quickReviewBtn" aria-label="今日の復習">↻</button>
@@ -92,7 +92,7 @@ window.GYOSEI_DATA={"mocks":{"mock1":[{"id":"MOCK1-01","mock":"mock1","no":1,"fo
 'use strict';
 
 const DATA = window.GYOSEI_DATA || {mocks:{}, predicted30:[], mnemonics:[], propositions:[]};
-const APP_VERSION = '1.2.2';
+const APP_VERSION = '1.3.0';
 const STORAGE_KEY = 'gyosei2026_state_v1';
 const EXAM_DATE_DEFAULT = '2026-11-08';
 const INTERVALS = [1,3,7,14,30];
@@ -199,6 +199,88 @@ for(const arr of propositionQuestionSets.values()){
   for(const p of arr)pastQuestionGroupByMemberId.set(p.id,g);
 }
 
+
+// ---------- 2026 current-law gate ----------
+// The 2026 exam tests laws in force as of 2026-04-01.
+// Old-law questions remain in the raw archive for audit/history, but are excluded from normal study.
+const CURRENT_LAW_BASELINE='2026-04-01';
+const CURRENT_LAW_EXCLUSIONS=new Map([
+  ['PAST-2016-29',{status:'OBSOLETE_BY_AMENDMENT',reason:'共有（旧法）を前提とする過去問。現行民法の共有制度とずれるため通常出題から除外。',replacement:'CURRENT26-01'}],
+  ['PAST-2016-33',{status:'OBSOLETE_BY_AMENDMENT',reason:'債務不履行（旧法）を前提とする過去問。2020年施行の債権法改正後の学習には不適切なため通常出題から除外。',replacement:'CURRENT26-02'}],
+  ['PAST-2017-28',{status:'OBSOLETE_BY_AMENDMENT',reason:'錯誤（旧法）を前提とする過去問。2020年施行の改正民法の錯誤規定とずれるため通常出題から除外。',replacement:'CURRENT26-03'}]
+]);
+
+const currentLawSupplements=[
+  {
+    id:'CURRENT26-01',type:'currentlaw',format:'5肢択一',section:'法令等',subject:'民法',field:'2026親族法改正',
+    topic:'父母の責務・子の人格尊重',priority:'S',points:4,currentLawAsOf:CURRENT_LAW_BASELINE,
+    verification:'OFFICIAL_PRIMARY',sourceTier:'法務省一次資料',
+    stem:'2026年4月1日施行の改正民法における父母の責務について、妥当なものはどれか。',
+    choices:[
+      '子を養育する責務を負うのは、離婚後に親権者となった父母に限られる。',
+      '父母が子に対して負う責務は、父母が婚姻関係にある場合に限って生じる。',
+      '父母は、婚姻関係や親権の有無にかかわらず、子の人格を尊重し、その心身の健全な発達を図るため子を養育する責務を負う。',
+      '子の人格を尊重するとは、父母が常に子の意向どおりに行動しなければならないことを意味する。',
+      '父母相互の人格尊重・協力義務は、子の養育とは無関係の理念規定である。'
+    ],
+    answers:['3'],
+    explanation:'新民法817条の12は、婚姻関係や親権の有無にかかわらない父母の責務を明確化した。子の人格尊重は、常に子の意向どおりにするという意味ではない。',
+    teacherPoint:'「親権者だけの責務」ではない。婚姻・親権の有無を外して問う肢と、「子の意向が常に絶対」とする肢が典型的なひっかけ。',
+    examReason:'2026年4月1日に新設・施行された条文で、条文趣旨と例外的な誤読を肢にしやすい。',
+    source:'https://www.moj.go.jp/MINJI/minji07_00377'
+  },
+  {
+    id:'CURRENT26-02',type:'currentlaw',format:'5肢択一',section:'法令等',subject:'民法',field:'2026財産分与改正',
+    topic:'財産分与・寄与割合',priority:'S',points:4,currentLawAsOf:CURRENT_LAW_BASELINE,
+    verification:'OFFICIAL_PRIMARY',sourceTier:'法務省一次資料',
+    stem:'2026年4月1日施行の改正民法による財産分与について、妥当なものはどれか。',
+    choices:[
+      '財産分与を家庭裁判所に求めることができる期間は、施行後に離婚した場合も離婚後2年である。',
+      '婚姻中の財産取得・維持への寄与は、収入額だけで判断し、家事や育児は考慮しない。',
+      '財産取得・維持への夫婦の寄与の程度は原則として2分の1ずつとされ、施行後に離婚した場合の財産分与の請求期間は5年である。',
+      '改正後は、婚姻期間や生活水準を財産分与で考慮することはできない。',
+      '家庭裁判所は財産情報の開示を命じることができない。'
+    ],
+    answers:['3'],
+    explanation:'改正民法は財産分与の考慮要素を明確化し、財産の取得・維持への寄与は原則として夫婦対等（2分の1ずつ）とした。2026年4月1日以後の離婚では請求期間も5年に伸長された。',
+    teacherPoint:'「2年→5年」と「寄与は原則1/2」をセットで覚える。収入だけでなく家事・育児も寄与に含まれる。',
+    examReason:'数字（2年/5年）と寄与割合（1/2）を入れ替える肢を作りやすく、2026改正の中心論点。',
+    source:'https://www.moj.go.jp/content/001449160.pdf'
+  },
+  {
+    id:'CURRENT26-03',type:'currentlaw',format:'5肢択一',section:'法令等',subject:'民法',field:'2026親子交流改正',
+    topic:'父母以外の親族と子の交流',priority:'A',points:4,currentLawAsOf:CURRENT_LAW_BASELINE,
+    verification:'OFFICIAL_PRIMARY',sourceTier:'法務省一次資料',
+    stem:'2026年4月1日施行の改正民法における子との交流に関する見直しについて、妥当なものはどれか。',
+    choices:[
+      '父母以外の親族と子との交流については、改正後も民法上まったく規律が設けられていない。',
+      '祖父母など父母以外の親族と子との交流に関する規律が整備された。',
+      '父母以外の親族には、子の利益にかかわらず無条件で交流できる絶対的権利が与えられた。',
+      '改正は養育費だけを対象とし、親子交流に関する規定は変更されていない。',
+      '父母以外の親族との交流に関する規律は2026年4月1日には施行されていない。'
+    ],
+    answers:['2'],
+    explanation:'2026年4月1日施行の改正では、父母以外の親族（祖父母等）と子との交流に関する規律も整備された。無条件の絶対的権利を与える趣旨ではなく、子の利益を中心に制度を理解する。',
+    teacherPoint:'「父母だけ」から範囲が広がった点が改正ポイント。無条件・絶対的権利とする肢は切る。',
+    examReason:'親子交流は2026改正の独立した柱で、旧法との差を問う肢を作りやすい。',
+    source:'https://www.moj.go.jp/content/001452583.pdf'
+  }
+];
+currentLawSupplements.forEach(q=>itemMap.set(q.id,q));
+
+const currentPastQuestionGroups=pastQuestionGroups.filter(g=>!CURRENT_LAW_EXCLUSIONS.has(g.id));
+const currentStudyPool=[...predicted,...currentLawSupplements,...currentPastQuestionGroups];
+
+function isCurrentLawEligible(it){
+  if(!it)return false;
+  if(it.type==='pastgroup')return !CURRENT_LAW_EXCLUSIONS.has(it.id);
+  if(it.type==='proposition'){
+    const g=pastQuestionGroupByMemberId.get(it.id);
+    return !(g&&CURRENT_LAW_EXCLUSIONS.has(g.id))&&!/旧法/.test(String(it.field||'')+' '+String(it.tag||''));
+  }
+  return true;
+}
+
 function propositionSiblings(it){
   if(!it||it.type!=='proposition')return [];
   return propositionQuestionSets.get(String(it.year||'')+'-'+String(it.qno||''))||[it];
@@ -278,8 +360,10 @@ function detailedExplanationHtml(it){
   const answer=answerTextFor(it);
   const point=String((it&&(it.topic||it.tag||it.field||it.subject))||'この論点');
   const reviews=choiceReviewHtml(it);
-  const source=it&&it.source?'<p style="margin-top:8px"><a href="'+esc(it.source)+'" target="_blank" rel="noopener">元の過去問原文・解説を開く</a></p>':'';
-  return '<div class="explain-book"><div class="explain-book-head"><strong>📖 解説書</strong><span>'+esc(point)+'</span></div><div class="explain-section"><h5>結論</h5><p><strong>'+esc(answer)+'</strong></p></div><div class="explain-section"><h5>なぜそうなるか</h5><p>'+nl(coreExplanationText(it))+'</p></div>'+(reviews?'<div class="explain-section"><h5>各肢の確認</h5>'+reviews+'</div>':'')+'<div class="explain-section"><h5>試験での注意</h5><p>'+esc(textbookTrap(it))+'</p>'+source+'</div></div>';
+  const source=it&&it.source?'<p style="margin-top:8px"><a href="'+esc(it.source)+'" target="_blank" rel="noopener">'+(it.verification==='OFFICIAL_PRIMARY'?'一次資料を開く':'元の過去問原文・解説を開く')+'</a></p>':'';
+  const teacher=it&&it.teacherPoint?'<div class="explain-section"><h5>先生用ポイント</h5><p>'+nl(it.teacherPoint)+'</p>'+(it.examReason?'<p style="margin-top:8px"><strong>出題理由：</strong>'+nl(it.examReason)+'</p>':'')+'</div>':'';
+  const verified=it&&it.currentLawAsOf?'<span class="badge green" style="margin-top:6px">現行法 '+esc(it.currentLawAsOf)+' 確認</span>':'';
+  return '<div class="explain-book"><div class="explain-book-head"><strong>📖 解説書</strong><span>'+esc(point)+'</span>'+verified+'</div><div class="explain-section"><h5>結論</h5><p><strong>'+esc(answer)+'</strong></p></div><div class="explain-section"><h5>なぜそうなるか</h5><p>'+nl(coreExplanationText(it))+'</p></div>'+(reviews?'<div class="explain-section"><h5>各肢の確認</h5>'+reviews+'</div>':'')+teacher+'<div class="explain-section"><h5>試験での注意</h5><p>'+esc(textbookTrap(it))+'</p>'+source+'</div></div>';
 }
 function bindRapControls(it,truth,expl){
   const rap=rapPhraseFor(it,truth||'',expl||'');
@@ -301,10 +385,10 @@ function unknownStudyFeedbackHtml(it,answer,expl){
 }
 
 
-const subjects = ['すべて',...Array.from(new Set([...mockQuestions,...predicted,...propositions,...pastQuestionGroups].map(x=>x.subject).filter(Boolean))).sort()];
+const subjects = ['すべて',...Array.from(new Set([...mockQuestions,...currentStudyPool,...propositions].filter(isCurrentLawEligible).map(x=>x.subject).filter(Boolean))).sort()];
 
 function itemMeta(id){ return itemMap.get(id); }
-function practicalStudyItem(it){ return it?.type==='proposition'?(pastQuestionGroupByMemberId.get(it.id)||it):it; }
+function practicalStudyItem(it){ if(!it)return it; if(it.type!=='proposition')return it; const g=pastQuestionGroupByMemberId.get(it.id); return (g&&isCurrentLawEligible(g))?g:it; }
 function uniqueStudyItems(items){
   const out=[],seen=new Set();
   for(const raw of items){
@@ -332,7 +416,7 @@ function syncPastGroupProgress(it){
 function getProgress(id){ return state.progress[id] || null; }
 function dueItems(){
   const t=today(); return Object.entries(state.progress).filter(([,p])=>p.due && p.due<=t && itemMap.has(p.id||'')===false ? false : true)
-    .map(([id,p])=>({id,p})).filter(x=>x.p.due && x.p.due<=t && itemMap.has(x.id))
+    .map(([id,p])=>({id,p})).filter(x=>x.p.due && x.p.due<=t && itemMap.has(x.id) && isCurrentLawEligible(itemMap.get(x.id)))
     .sort((a,b)=>(a.p.due||'').localeCompare(b.p.due||''));
 }
 function todayEvents(){ const t=today(); return state.events.filter(e=>e.date===t); }
@@ -373,7 +457,7 @@ function weaknessScore(p){
 function weakGroups(){
   const g=new Map();
   Object.entries(state.progress).forEach(([id,p])=>{
-    const it=itemMeta(id); if(!it)return;
+    const it=itemMeta(id); if(!it||!isCurrentLawEligible(it))return;
     const key=(it.subject||'その他')+'｜'+(it.topic||it.field||'その他');
     const o=g.get(key)||{key,subject:it.subject||'その他',topic:it.topic||it.field||'その他',score:0,wrong:0,attempts:0,ids:[]};
     o.score+=weaknessScore(p); o.wrong+=p.wrong||0; o.attempts+=p.attempts||0; o.ids.push(id); g.set(key,o);
@@ -425,8 +509,8 @@ function renderHome(){
     <div class="section-title">教材</div>
     <section class="grid">
       <div class="card clickable" data-route-link="mocks"><h3>模試 3回</h3><p>全180問。3時間モード＋採点。</p></div>
-      <div class="card clickable" data-action="home-study" data-mode="pred"><h3>2026予想30</h3><p>10年分析＋改正論点。</p></div>
-      <div class="card clickable" data-action="home-study" data-mode="prop"><h3>命題 ○×</h3><p>${propositions.length.toLocaleString()}命題を肢単位で反復。</p></div>
+      <div class="card clickable" data-action="home-study" data-mode="pred"><h3>2026重点予想</h3><p>改正法補充を含む現行法セット。</p></div>
+      <div class="card clickable" data-action="home-study" data-mode="prop"><h3>過去問 実戦</h3><p>${currentPastQuestionGroups.length.toLocaleString()}問。旧法は除外済み。</p></div>
       <div class="card clickable" data-route-link="weak"><h3>弱点ランキング</h3><p>間違い・勘・2択を自動集計。</p></div>
     </section>
     <div class="section-title">模試スコア</div>
@@ -447,16 +531,17 @@ function renderStudyMenu(){
         <div class="field"><label>科目</label><select id="studySubject">${subjects.map(s=>`<option ${state.settings.subject===s?'selected':''}>${esc(s)}</option>`).join('')}</select></div>
         <div class="field"><label>問題数</label><select id="studyCount">${[10,20,30,40,50].map(n=>`<option ${n===state.settings.newDaily?'selected':''}>${n}</option>`).join('')}</select></div><div class="field"><label>新規論点</label><select id="studyNewTopics">${[1,2,3,4,5].map(n=>`<option ${n===(state.settings.newTopics||3)?'selected':''}>${n}</option>`).join('')}</select></div>
       </div>
-      <p class="note">過去問肢は、同じ年度・問番号の3〜5肢をまとめて表示して読解負荷を上げます。解答後は各肢の解説まで確認できます。</p>
+      <p class="note">2026年4月1日基準の現行法フィルターを適用中。旧法前提の過去問は通常出題から除外し、改正法の有力論点だけを補充しています。過去問は3〜5肢をまとめて表示します。</p>
     </div>
     <div class="section-title">学習モード</div>
     <div class="list">
       ${studyModeRow('daily','今日の自動セット v2',`新規${state.settings.newTopics||3}論点＝参考書→想起→問題。その後に期限復習。最大 ${state.settings.newDaily} 問`,'v2')}
       ${studyModeRow('due','今日の復習',`${dueItems().length}問が期限到来`,'復習')}
-      ${studyModeRow('pred','2026予想30問','10年分析・2026改正から作成','予想')}
-      ${studyModeRow('prop','過去10年 実戦問題',`${pastQuestionGroups.length.toLocaleString()}問・3〜5肢まとめ読み`,'過去問')}
+      ${studyModeRow('pred','2026重点予想',`${predicted.length+currentLawSupplements.length}問・改正法補充込み`,'予想')}
+      ${studyModeRow('currentlaw','2026改正法 補充',`${currentLawSupplements.length}問・一次資料確認済み`,'新法')}
+      ${studyModeRow('prop','過去10年 実戦問題',`${currentPastQuestionGroups.length.toLocaleString()}問・旧法${CURRENT_LAW_EXCLUSIONS.size}問除外`,'過去問')}
       ${studyModeRow('weak','弱点だけ','誤答・勘・2択の多い問題から','弱点')}
-      ${studyModeRow('random','ランダム','予想＋過去問実戦問題からランダム出題','混合')}
+      ${studyModeRow('random','ランダム','現行法確認済みの予想＋改正法＋過去問から出題','混合')}
       ${studyModeRow('mnemonic','口ずさみ暗記',`${mnemonics.length}フレーズ`,'暗記')}
     </div>
   `;
@@ -496,7 +581,7 @@ function dailyTopicWasSeen(it){
   return false;
 }
 function dailyRelatedFresh(base,limit=2){
-  return filterSubject([...predicted,...pastQuestionGroups])
+  return filterSubject(currentStudyPool)
     .filter(x=>x.id!==base.id && !state.progress[x.id])
     .map(x=>({x,score:dailyTopicScore(base,x)}))
     .filter(z=>z.score>=3)
@@ -508,12 +593,13 @@ function dailyRelatedFresh(base,limit=2){
 function buildStudyItems(mode, topicKey){
   const count=state.settings.newDaily||20;
   if(mode==='due') return uniqueStudyItems(dueItems().map(x=>itemMeta(x.id)).filter(Boolean));
-  if(mode==='pred') return filterSubject(predicted).slice(0,Math.max(count,30));
+  if(mode==='pred') return filterSubject([...predicted,...currentLawSupplements]).slice(0,Math.max(count,predicted.length+currentLawSupplements.length));
+  if(mode==='currentlaw') return filterSubject(currentLawSupplements).slice(0,count);
   if(mode==='prop'){
     const due=uniqueStudyItems(dueItems().map(x=>itemMeta(x.id)).filter(Boolean))
       .filter(x=>x?.type==='pastgroup'||x?.type==='proposition');
     const used=new Set(due.map(x=>x.id));
-    const fresh=filterSubject(pastQuestionGroups.filter(p=>!state.progress[p.id]&&!used.has(p.id)));
+    const fresh=filterSubject(currentPastQuestionGroups.filter(p=>!state.progress[p.id]&&!used.has(p.id)));
     return [...due,...shuffle(fresh)].slice(0,count);
   }
   if(mode==='weak'){
@@ -522,14 +608,14 @@ function buildStudyItems(mode, topicKey){
     else ids=Object.keys(state.progress).sort((a,b)=>weaknessScore(state.progress[b])-weaknessScore(state.progress[a]));
     return filterSubject(ids.map(itemMeta).filter(Boolean)).slice(0,count);
   }
-  if(mode==='random') return shuffle(filterSubject([...predicted,...pastQuestionGroups])).slice(0,count);
+  if(mode==='random') return shuffle(filterSubject(currentStudyPool)).slice(0,count);
   if(mode==='daily'){
     const target=Math.max(10,state.settings.newDaily||20);
     const newTopicTarget=Math.max(1,Math.min(5,state.settings.newTopics||3));
     const due=uniqueStudyItems(dueItems().map(x=>itemMeta(x.id)).filter(Boolean));
 
     // 未導入論点を優先。2026予想(S→A)を先にし、その後に10年命題。
-    const fresh=filterSubject([...predicted,...pastQuestionGroups])
+    const fresh=filterSubject(currentStudyPool)
       .filter(x=>!state.progress[x.id])
       .map((x,idx)=>({
         x,idx,
@@ -671,7 +757,7 @@ function renderStudyItem(){
   if(s.idx>=s.items.length){renderStudyDone();return;}
   const it=s.items[s.idx];
   const progress=Math.round((s.idx/s.items.length)*100);
-  const metaBadges=`<span class="badge">${esc(it.subject||'')}</span><span class="badge">${esc(it.topic||it.field||'')}</span>${it.year?`<span class="badge">${it.year}</span>`:''}`;
+  const metaBadges=`<span class="badge">${esc(it.subject||'')}</span><span class="badge">${esc(it.topic||it.field||'')}</span>${it.year?`<span class="badge">${it.year}</span>`:''}${it.currentLawAsOf?`<span class="badge green">現行法${esc(it.currentLawAsOf)}</span>`:''}`;
   let body='';
   if(it.type==='pastgroup'){
     body='<p class="q-stem">'+nl(it.stem)+'</p><div class="exam-note">本試験のように複数肢をまとめて読む練習です。妥当だと思う肢をすべて選んでから答え合わせしてください。</div><div class="choice-list">'+(it.choices||[]).map((x,i)=>'<button class="choice" data-past-choice="'+String(i+1)+'"><span class="num">'+String(i+1)+'</span>'+nl(x)+'</button>').join('')+'</div><button class="btn full" id="pastSubmit" style="margin-top:12px">答え合わせ</button>';

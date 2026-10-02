@@ -1,0 +1,10 @@
+# Mac 標準の Python 3.9.6（LibreSSL）で動かすため、urllib3 は 1.x 系に固定する。
+# urllib3 2.x は OpenSSL 1.1.1 以上が必要で、LibreSSL だと警告・通信失敗の原因になる。
+urllib3>=1.26.18,<2
+requests>=2.31,<2.32
+pytrends==4.9.2
+pandas>=2.0,<2.3
+numpy>=1.24,<2.1
+matplotlib>=3.7,<3.10
+beautifulsoup4>=4.12,<5
+lxml>=4.9,<6

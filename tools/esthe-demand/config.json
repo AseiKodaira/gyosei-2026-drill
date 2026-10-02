@@ -1,0 +1,17 @@
+{
+  "site": "https://tokyo-luxury.jp",
+  "schedule_url": "https://tokyo-luxury.jp/schedule/",
+  "days": 7,
+  "user_agent": "esthe-schedule-logger/1.0 (store-internal, 1 run per day)",
+  "request_interval_sec": 3,
+  "data_dir": "~/esthe_data",
+  "last_time": "29:00",
+  "record_availability": true,
+  "selectors": {
+    "card": "",
+    "name": "",
+    "time": ""
+  },
+  "trends_keywords": ["上野 メンズエステ", "御徒町 メンズエステ", "TOKYO LUXURY"],
+  "hour_range": [10, 29]
+}

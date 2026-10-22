@@ -43,10 +43,16 @@ internal static class Ui
         VerticalScrollBarVisibility = multi ? ScrollBarVisibility.Auto : ScrollBarVisibility.Disabled, BorderBrush = Line,
     };
 
-    public static StackPanel Field(string label, UIElement input, string? hint = null)
+    public static StackPanel Field(string label, UIElement input, string? hint = null, UIElement? headerExtra = null)
     {
         var sp = new StackPanel { Margin = new Thickness(0, 0, 0, 8) };
-        sp.Children.Add(Text(label, 14, true, Muted));
+        if (headerExtra == null) sp.Children.Add(Text(label, 14, true, Muted));
+        else
+        {
+            var h = new StackPanel { Orientation = Orientation.Horizontal };
+            h.Children.Add(Text(label, 14, true, Muted)); h.Children.Add(headerExtra);
+            sp.Children.Add(h);
+        }
         sp.Children.Add(input);
         if (hint != null) sp.Children.Add(Text(hint, 12, false, Muted));
         return sp;

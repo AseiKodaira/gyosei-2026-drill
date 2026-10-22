@@ -6,6 +6,7 @@ using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Threading;
+using Kiroku.Client;
 using Kiroku.Core;
 
 namespace Kiroku.App;
@@ -26,6 +27,12 @@ internal sealed class MainWindow : AppWindow
     private bool _dirty, _loading, _offline, _busy, _memoDirty;
     private int _memoVersion;
     private long _rev = -1;
+    private RecordDetail? _saved;          // 画面に読み込んだ「保存済み」の記録(コピーはここから取る)
+    private MemoDetail? _savedMemo;
+    private readonly List<Action> _copyRefresh = [];
+    private readonly TextBlock _toast = Ui.Text("", 15, true, Brushes.White);
+    private readonly TextBlock _dateReadable = Ui.Text("", 15, true, Ui.Primary);
+    private readonly DispatcherTimer _toastTimer = new() { Interval = TimeSpan.FromSeconds(2) };
 
     // 上部
     private readonly DatePicker _topDate = new() { FontSize = 18, MinHeight = 40, SelectedDateFormat = DatePickerFormat.Long };
@@ -86,6 +93,7 @@ internal sealed class MainWindow : AppWindow
         _formDate.SelectedDateChanged += (_, _) => Safe(() => ChangeDay(_formDate.SelectedDate));
 
         _suggestDebounce.Tick += (_, _) => { _suggestDebounce.Stop(); Safe(RefreshSuggestions); };
+        _toastTimer.Tick += (_, _) => { _toastTimer.Stop(); _toast.Text = ""; };
         _timer.Tick += (_, _) => Safe(Poll);
         Loaded += (_, _) => Safe(Start);
         Closing += OnClosing;
@@ -109,6 +117,7 @@ internal sealed class MainWindow : AppWindow
         Grid.SetColumn(dateRow, 1); bar.Children.Add(dateRow);
         var mid = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center };
         _counts.Margin = new Thickness(0, 0, 24, 0); mid.Children.Add(_counts); mid.Children.Add(_state);
+        _toast.Margin = new Thickness(24, 0, 0, 0); mid.Children.Add(_toast);
         Grid.SetColumn(mid, 2); bar.Children.Add(mid);
         var right = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 6, 8, 6) };
         right.Children.Add(Ui.Text(_st.Staff.Name + " さん", 15, false, Brushes.White));
@@ -155,9 +164,10 @@ internal sealed class MainWindow : AppWindow
         _nameBox.TextChanged += (_, _) => OnNameTyped();
         _nameBox.LostKeyboardFocus += (_, _) => Safe(OnNameCommitted);
         _nameBox.PreviewKeyDown += (_, e) => { if (e.Key == Key.Down && _namePop.IsOpen) { _nameList.Focus(); if (_nameList.Items.Count > 0) _nameList.SelectedIndex = 0; e.Handled = true; } };
-        var nameField = Ui.Field("氏名", nameGrid);
+        var nameField = Ui.Field("氏名", nameGrid, null, CopyBtn(CopyValues.Name));
         nameField.Children.Add(_nameHint);
-        var dateField = Ui.Field("日付", _formDate);
+        var dateField = Ui.Field("日付", _formDate, null, CopyBtn(CopyValues.Date));
+        dateField.Children.Add(_dateReadable);
 
         var top = new Grid();
         top.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(2, GridUnitType.Star) });
@@ -167,13 +177,13 @@ internal sealed class MainWindow : AppWindow
 
         var times = new Grid();
         for (var i = 0; i < 2; i++) times.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-        times.Children.Add(TimeField("通所時間", _in, 0));
-        times.Children.Add(TimeField("退所時間", _out, 1));
+        times.Children.Add(TimeField("通所時間", _in, 0, CopyValues.CheckIn));
+        times.Children.Add(TimeField("退所時間", _out, 1, CopyValues.CheckOut));
         form.Children.Add(times);
 
-        form.Children.Add(Ui.Field("作業内容", _work));
+        form.Children.Add(Ui.Field("作業内容", _work, null, CopyBtn(CopyValues.Work)));
         _chips.Margin = new Thickness(0, -4, 0, 8); form.Children.Add(_chips);
-        form.Children.Add(Ui.Field("利用者の様子(支援状況・体調・作業への取り組み・職員の対応など)", _notes));
+        form.Children.Add(Ui.Field("利用者の様子(支援状況・体調・作業への取り組み・職員の対応など)", _notes, null, CopyBtn(CopyValues.Notes)));
 
         var btns = new StackPanel { Orientation = Orientation.Horizontal };
         btns.Children.Add(_saveBtn); btns.Children.Add(_saveNextBtn); btns.Children.Add(_recInfo);
@@ -199,7 +209,7 @@ internal sealed class MainWindow : AppWindow
         sp.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
         var left = new StackPanel();
         var head = new StackPanel { Orientation = Orientation.Horizontal };
-        head.Children.Add(Ui.Text("終礼メモ(この日の共通メモ)", 18, true)); _memoInfo.Margin = new Thickness(14, 0, 0, 0); head.Children.Add(_memoInfo);
+        head.Children.Add(Ui.Text("終礼メモ(この日の共通メモ)", 18, true)); head.Children.Add(MemoCopyBtn()); _memoInfo.Margin = new Thickness(14, 0, 0, 0); head.Children.Add(_memoInfo);
         left.Children.Add(head); left.Children.Add(_memo);
         _memo.TextChanged += (_, _) => { if (!_loading) { _memoDirty = true; UpdateState(); } };
         sp.Children.Add(left);
@@ -208,7 +218,7 @@ internal sealed class MainWindow : AppWindow
         return Ui.Card(sp, new Thickness(10, 0, 10, 10));
     }
 
-    private UIElement TimeField(string label, TextBox box, int col)
+    private UIElement TimeField(string label, TextBox box, int col, Func<RecordDetail?, string?> pick)
     {
         var row = new Grid();
         row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
@@ -216,10 +226,26 @@ internal sealed class MainWindow : AppWindow
         row.Children.Add(box);
         var now = Ui.Btn("いま", () => { box.Text = DateTime.Now.ToString("HH:mm"); box.Focus(); }, minWidth: 70); now.Margin = new Thickness(6, 0, 0, 0);
         Grid.SetColumn(now, 1); row.Children.Add(now);
-        var f = Ui.Field(label, row, "例: 9:30 や 0930(空のままでも保存できます)");
+        var f = Ui.Field(label, row, "例: 9:30 や 0930(空のままでも保存できます)", CopyBtn(pick));
         f.Margin = new Thickness(col == 0 ? 0 : 12, 0, 0, 8);
         Grid.SetColumn(f, col);
         return f;
+    }
+
+    private Button CopyBtn(Func<RecordDetail?, string?> pick) => MakeCopy(() => pick(_saved), () => _dirty || _saved == null);
+    private Button MemoCopyBtn() => MakeCopy(() => CopyValues.Memo(_savedMemo), () => _memoDirty);
+
+    private Button MakeCopy(Func<string?> value, Func<bool> unsaved)
+    {
+        var b = CopyService.Button(value, unsaved, ReportCopy, out var refresh);
+        _copyRefresh.Add(refresh); refresh();
+        return b;
+    }
+
+    private void ReportCopy(string? error)
+    {
+        if (error != null) { Ui.Error(this, error, "コピーできませんでした"); return; }
+        _toast.Text = "✓ コピーしました"; _toastTimer.Stop(); _toastTimer.Start();
     }
 
     private sealed record Row(string Id, string ClientId, string Name, string In, string Out, string Status, int Version);
@@ -268,7 +294,7 @@ internal sealed class MainWindow : AppWindow
     {
         var m = await _st.Api.Memo(AppState.DayText(_day));
         _loading = true; _memo.Text = m.Text; _loading = false;
-        _memoVersion = m.Version; _memoDirty = false;
+        _memoVersion = m.Version; _memoDirty = false; _savedMemo = m;
         _memoInfo.Text = m.UpdatedAt == null ? "まだ入力されていません" : $"最終更新: {m.UpdatedByName}  {FormatTime(m.UpdatedAt)}";
         UpdateState();
     }
@@ -327,6 +353,13 @@ internal sealed class MainWindow : AppWindow
 
     private void UpdateState()
     {
+        foreach (var r in _copyRefresh) r();
+        _dateReadable.Text = AppState.DayLabel(_day);
+        UpdateStateText();
+    }
+
+    private void UpdateStateText()
+    {
         if (_offline) { _state.Text = "● 親機に接続できません(未保存)"; _state.Foreground = Brushes.Yellow; return; }
         if (_dirty || _memoDirty) { _state.Text = "● 未保存の変更があります"; _state.Foreground = Brushes.Yellow; return; }
         _state.Text = _lastSaved == null ? "" : "✓ 保存済み " + _lastSaved; _state.Foreground = Brushes.White;
@@ -338,7 +371,7 @@ internal sealed class MainWindow : AppWindow
     private void OnNameTyped()
     {
         if (_loading) return;
-        if (_client != null && _nameBox.Text != _client.Name) { _client = null; _recordId = null; _version = 0; _recInfo.Text = ""; }
+        if (_client != null && _nameBox.Text != _client.Name) { _client = null; _recordId = null; _version = 0; _saved = null; _recInfo.Text = ""; }
         UpdateNameHint();
         if (_nameBox.IsKeyboardFocusWithin) ShowNameList(all: false);
     }
@@ -388,7 +421,7 @@ internal sealed class MainWindow : AppWindow
         _loading = true; _nameBox.Text = c.Name; _loading = false;
         _nameHint.Text = "";
         var d = await _st.Api.Record(c.Id, AppState.DayText(_day));
-        if (d != null) FillForm(d); else { _recordId = null; _version = 0; ClearFields(keepName: true); _recInfo.Text = "この日の記録はまだありません(新規)"; }
+        if (d != null) FillForm(d); else { _recordId = null; _version = 0; _saved = null; ClearFields(keepName: true); _recInfo.Text = "この日の記録はまだありません(新規)"; }
         await OfferDraft();
         if (d == null) _in.Focus(); else _out.Focus();
     }
@@ -418,7 +451,7 @@ internal sealed class MainWindow : AppWindow
         _client = new ClientInfo(d.ClientId, d.ClientName);
         _nameBox.Text = d.ClientName; _in.Text = d.CheckIn ?? ""; _out.Text = d.CheckOut ?? "";
         _work.Text = d.Work; _notes.Text = d.Notes;
-        _recordId = d.Id; _version = d.Version; _dirty = false;
+        _recordId = d.Id; _version = d.Version; _dirty = false; _saved = d;
         _recInfo.Text = $"最終更新: {d.UpdatedByName}  {FormatTime(d.UpdatedAt)}";
         _nameHint.Text = "";
         _loading = false;
@@ -438,7 +471,7 @@ internal sealed class MainWindow : AppWindow
 
     private void ClearForm()
     {
-        _client = null; _recordId = null; _version = 0; _recInfo.Text = ""; _nameHint.Text = "";
+        _client = null; _recordId = null; _version = 0; _saved = null; _recInfo.Text = ""; _nameHint.Text = "";
         ClearFields(keepName: false);
     }
 
@@ -565,7 +598,7 @@ internal sealed class MainWindow : AppWindow
                 try
                 {
                     var m = await _st.Api.SaveMemo(new MemoSaveRequest(AppState.DayText(_day), text, ver));
-                    _memoVersion = m.Version; _memoDirty = false;
+                    _memoVersion = m.Version; _memoDirty = false; _savedMemo = m;
                     _memoInfo.Text = m.UpdatedAt == null ? "" : $"最終更新: {m.UpdatedByName}  {FormatTime(m.UpdatedAt)}";
                     _lastSaved = DateTime.Now.ToString("HH:mm"); UpdateState();
                     return;
@@ -578,7 +611,7 @@ internal sealed class MainWindow : AppWindow
                         $"{cur.UpdatedByName}さんが {FormatTime(cur.UpdatedAt ?? "")} に保存しました。相手の内容を消さないよう、保存を止めています。\n\n【相手の内容】\n{Short(cur.Text)}",
                         "相手の内容のあとに、自分の入力を付け足して保存する(両方残る)", "相手の内容を表示する(自分の入力は破棄)", "自分の入力で上書きする(相手の内容は履歴に残ります)", "戻って確認する");
                     if (pick == 0) { text = cur.Text.TrimEnd() + "\n" + text; ver = cur.Version; }
-                    else if (pick == 1) { _loading = true; _memo.Text = cur.Text; _loading = false; _memoVersion = cur.Version; _memoDirty = false; UpdateState(); return; }
+                    else if (pick == 1) { _loading = true; _memo.Text = cur.Text; _loading = false; _memoVersion = cur.Version; _memoDirty = false; _savedMemo = cur; UpdateState(); return; }
                     else if (pick == 2) ver = cur.Version;
                     else return;
                 }

@@ -1,0 +1,25 @@
+<!-- Linux上で Kiroku.App (WPF, コードのみ・XAMLなし) の型検査だけを行うための検証用プロジェクト。
+     WPFの参照アセンブリ(NuGet: Microsoft.WindowsDesktop.App.Ref)を直接参照する。実行はできない。 -->
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <OutputType>Library</OutputType>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <NoWarn>$(NoWarn);CA1416;CS8002</NoWarn>
+    <WpfRefVersion>8.0.32</WpfRefVersion>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageDownload Include="Microsoft.WindowsDesktop.App.Ref" Version="[$(WpfRefVersion)]" />
+    <Compile Include="..\..\src\Kiroku.App\**\*.cs" Exclude="..\..\src\Kiroku.App\obj\**;..\..\src\Kiroku.App\bin\**" />
+    <ProjectReference Include="..\..\src\Kiroku.Client\Kiroku.Client.csproj" />
+  </ItemGroup>
+  <!-- NETCore側の WindowsBase(ファサード)と WPF 側の WindowsBase が衝突するため、WPF側を優先する -->
+  <Target Name="AddWpfRefs" BeforeTargets="CoreCompile" DependsOnTargets="FindReferenceAssembliesForReferences">
+    <ItemGroup>
+      <WpfRef Include="$(NuGetPackageRoot)microsoft.windowsdesktop.app.ref/$(WpfRefVersion)/ref/net8.0/*.dll" />
+      <ReferencePathWithRefAssemblies Remove="@(ReferencePathWithRefAssemblies)"
+        Condition="'%(Filename)' == 'WindowsBase' And $([System.String]::Copy('%(FullPath)').Contains('Microsoft.NETCore.App.Ref'))" />
+      <ReferencePathWithRefAssemblies Include="@(WpfRef)" />
+    </ItemGroup>
+  </Target>
+</Project>

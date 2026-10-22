@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <AssemblyName>Kiroku.App</AssemblyName>
+    <RootNamespace>Kiroku.App</RootNamespace>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <SatelliteResourceLanguages>ja</SatelliteResourceLanguages>
+    <Product>事業所記録アプリ</Product>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Kiroku.Client\Kiroku.Client.csproj" />
+  </ItemGroup>
+</Project>
